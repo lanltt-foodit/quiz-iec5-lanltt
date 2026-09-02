@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luyện trắc nghiệm theo cấp độ</title>
+<style>
+  :root{
+    --ink:#1F1B3A; --ink-soft:#5F5B7A; --line:#E3E0F2; --card:#FFFFFF;
+    --primary:#4F46E5; --primary-dark:#3B34B8; --primary-bg:#EEF0FF;
+    --ok:#0E9F6E; --ok-bg:#E3F7EF; --bad:#E5484D; --bad-bg:#FDECEC;
+    --claude:#C026A5; --claude-bg:#FBE8F6;
+    --accent-1:#FF8A5B; --accent-2:#F6C453; --accent-3:#5BC0EB;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);line-height:1.5;
+       background:linear-gradient(160deg,#EEF0FF 0%,#F8F6FF 45%,#FFF4EC 100%);min-height:100vh}
+  .wrap{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+  h1{font-size:30px;margin:0 0 4px;letter-spacing:-.01em;
+     background:linear-gradient(90deg,var(--primary),var(--claude));-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+  .sub{color:var(--ink-soft);margin:0 0 28px}
+  button{font:inherit;cursor:pointer;border-radius:12px;border:1.5px solid var(--primary);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:11px 20px;font-weight:600;box-shadow:0 6px 16px rgba(79,70,229,.25)}
+  button:hover:not(:disabled){filter:brightness(1.06)}
+  button.ghost{background:transparent;color:var(--primary);box-shadow:none}
+  button:focus-visible{outline:3px solid #A5B4FC;outline-offset:2px}
+  button:disabled{opacity:.45;cursor:default}
+
+  .level{display:flex;gap:16px;align-items:center;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:14px;text-align:left;width:100%;color:var(--ink);box-shadow:0 8px 24px rgba(31,27,58,.06);position:relative;overflow:hidden}
+  .level::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(180deg,var(--accent-1),var(--accent-2))}
+  .level:nth-child(3n+3)::before{background:linear-gradient(180deg,var(--accent-3),var(--primary))}
+  .level:nth-child(3n+4)::before{background:linear-gradient(180deg,var(--claude),var(--accent-1))}
+  .level:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 12px 28px rgba(79,70,229,.15)}
+  .level .num{font-size:36px;font-weight:800;line-height:1;min-width:56px;text-align:center;color:var(--primary);padding-right:16px;border-right:1.5px solid var(--line)}
+  .level .t{font-weight:700;font-size:17px}
+  .level .m{color:var(--ink-soft);font-size:14px;margin-top:2px}
+  .level .best{margin-left:auto;font-size:13px;font-weight:600;color:var(--primary);background:var(--primary-bg);border-radius:999px;padding:5px 12px;white-space:nowrap}
+
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;font-size:14px;color:var(--ink-soft);align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 11px;font-size:13px;font-weight:600}
+  .badge.file{background:var(--primary-bg);color:var(--primary)}
+  .badge.claude{background:var(--claude-bg);color:var(--claude)}
+
+  .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:var(--ink-soft)}
+  .track{height:8px;background:#E6E4F5;border-radius:4px;overflow:hidden;margin-bottom:26px}
+  .track div{height:100%;background:linear-gradient(90deg,var(--primary),var(--claude));transition:width .3s}
+  .q{font-size:22px;font-weight:700;margin:0 0 20px;line-height:1.4}
+  .q .blank{display:inline-block;min-width:80px;border-bottom:3px solid var(--accent-1);vertical-align:baseline}
+  .opts{display:grid;gap:10px}
+  .opt{display:flex;align-items:center;gap:14px;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;text-align:left;color:var(--ink);width:100%;font-size:17px;font-weight:500;box-shadow:0 4px 14px rgba(31,27,58,.05)}
+  .opt:hover:not(:disabled){border-color:var(--primary);background:var(--primary-bg)}
+  .opt .k{width:30px;height:30px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0}
+  .opt.correct{border-color:var(--ok);background:var(--ok-bg)}
+  .opt.correct .k{background:var(--ok);color:#fff}
+  .opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+  .opt.wrong .k{background:var(--bad);color:#fff}
+  .opt:disabled{opacity:1;cursor:default;box-shadow:none}
+  .opt:disabled:not(.correct):not(.wrong){opacity:.5}
+
+  .fb{margin-top:18px;border-radius:14px;padding:16px 18px;border-left:6px solid}
+  .fb.ok{background:var(--ok-bg);border-color:var(--ok)}
+  .fb.bad{background:var(--bad-bg);border-color:var(--bad)}
+  .fb .v{font-weight:700;margin-bottom:4px;font-size:17px}
+  .fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+  .fb .vi{margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.7);border-radius:10px;font-size:15px;font-style:italic;color:var(--ink)}
+  .fb .src{margin-top:10px;font-size:14px}
+  .fb .note{margin-top:8px;font-size:15px;color:var(--ink-soft)}
+  .actions{display:flex;justify-content:space-between;margin-top:22px;gap:10px}
+
+  .score{text-align:center;padding:28px 0 8px}
+  .score .big{font-size:72px;font-weight:800;line-height:1;background:linear-gradient(90deg,var(--primary),var(--claude));-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+  .score .of{color:var(--ink-soft);font-size:18px}
+  .review{margin-top:24px}
+  .row{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:15px;box-shadow:0 4px 14px rgba(31,27,58,.04)}
+  .row.hit{border-left:6px solid var(--ok)} .row.miss{border-left:6px solid var(--bad)}
+  .row .s{color:var(--ink-soft);font-size:14px;margin-top:3px}
+
+  [data-theme="dark"]{
+    --ink:#EEF0F7; --ink-soft:#A9ACC0; --line:#2A2D3E; --card:#15172A;
+    --primary-bg:rgba(99,102,241,.18);
+    --ok-bg:rgba(14,159,110,.18); --bad-bg:rgba(229,72,77,.18); --claude-bg:rgba(192,38,165,.2);
+  }
+  [data-theme="dark"] body{background:radial-gradient(1000px 500px at 15% -10%,#1C1E36 0%,#0B0C16 55%,#050609 100%)}
+  [data-theme="dark"] .level{box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  [data-theme="dark"] .opt,[data-theme="dark"] .row{box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  [data-theme="dark"] .track{background:#23263A}
+  [data-theme="dark"] .fb .vi{background:rgba(255,255,255,.07)}
+  .intro{background:var(--card);border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:14px;color:var(--ink-soft)}
+  .theme{position:fixed;top:14px;right:14px;padding:8px 14px;font-size:13px;border-radius:999px;z-index:9}
+  .theme.ghost{background:var(--card);border-color:var(--line);color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  @media (prefers-reduced-motion:reduce){.track div,.level{transition:none}}
+</style>
+</head>
+<body>
+<button class="theme ghost" id="themeBtn" onclick="toggleTheme()">☀ Nền sáng</button>
+<div class="wrap" id="app"></div>
+
+<script>
+/* =========================================================
+   DỮ LIỆU CÁC CẤP ĐỘ
+   Mỗi file PDF = 1 cấp độ riêng. Không cộng dồn.
+   answerSource: "file"   -> đáp án lấy từ file gốc (đã đúng)
+                 "claude" -> file sai/thiếu, Claude tự tìm đáp án đúng
+   ========================================================= */
+const LEVELS = [
+  {
+    id: 1,
+    title: "Unit 1A – Grammar & Vocabulary",
+    source: "01-Unit_1A_-_Grammar___Vocabulary_Quiz.pdf",
+    topic: "Đại từ nhân xưng, tân ngữ & sở hữu",
+    questions: [
+      { q: "We aren't going to Emma and Ian's wedding. They haven't invited ___.",
+        options: ["We","Us","Our"], answer: 1, answerSource: "file",
+        note: "Sau động từ 'invited' cần tân ngữ → us.",
+        vi: "Chúng tôi sẽ không đi dự đám cưới của Emma và Ian. Họ chưa mời chúng tôi." },
+      { q: "My wife and I are having a baby girl. We're going to call ___ Eloise.",
+        options: ["She","His","Her"], answer: 2, answerSource: "file",
+        note: "'call + tân ngữ + tên' → her.",
+        vi: "Vợ tôi và tôi sắp có một bé gái. Chúng tôi sẽ đặt tên cho con bé là Eloise." },
+      { q: "I'd like you to meet my new boyfriend. ___ name is Tom.",
+        options: ["His","Their","Her"], answer: 0, answerSource: "file",
+        note: "Boyfriend là nam → tính từ sở hữu his.",
+        vi: "Tôi muốn giới thiệu bạn trai mới của tôi. Tên anh ấy là Tom." },
+      { q: "I've got two nieces. ___ names are Sarah and Laura.",
+        options: ["Their","His","Our"], answer: 0, answerSource: "file",
+        note: "Hai cháu gái (số nhiều) → their.",
+        vi: "Tôi có hai cháu gái. Tên của chúng là Sarah và Laura." },
+      { q: "Do you know where my keys are? I can't find ___.",
+        options: ["They","His","Them"], answer: 2, answerSource: "file",
+        note: "'find' cần tân ngữ, keys số nhiều → them.",
+        vi: "Bạn có biết chìa khóa của tôi ở đâu không? Tôi không tìm thấy chúng." },
+      { q: "I'm staying at my sister's house when I'm in the UK. I always stay with ___.",
+        options: ["Them","Her","Him"], answer: 1, answerSource: "file",
+        note: "Sister (nữ, số ít) → her.",
+        vi: "Khi ở Anh tôi ở nhà chị gái. Tôi luôn ở cùng chị ấy." },
+      { q: "My car hasn't got any petrol. Let's take ___.",
+        options: ["Yours","Me","Mine"], answer: 0, answerSource: "file",
+        note: "Xe tôi hết xăng nên đi xe của bạn → đại từ sở hữu yours.",
+        vi: "Xe tôi hết xăng rồi. Mình đi xe của bạn nhé." },
+      { q: "It's my dad's birthday tomorrow. I mustn't forget to call ___.",
+        options: ["Him","Her","He"], answer: 0, answerSource: "file",
+        note: "Dad (nam) làm tân ngữ → him.",
+        vi: "Mai là sinh nhật bố tôi. Tôi không được quên gọi cho ông ấy." },
+      { q: "We go everywhere by public transport. The bus stops right outside ___ house.",
+        options: ["Their","We","Our"], answer: 2, answerSource: "file",
+        note: "Trước danh từ 'house' cần tính từ sở hữu → our.",
+        vi: "Chúng tôi đi đâu cũng bằng phương tiện công cộng. Xe buýt dừng ngay trước nhà chúng tôi." },
+      { q: "Can I borrow your book, please? I can't find ___.",
+        options: ["My","His","Mine"], answer: 2, answerSource: "file",
+        note: "Không có danh từ theo sau → đại từ sở hữu mine.",
+        vi: "Cho tôi mượn sách của bạn được không? Tôi không tìm thấy sách của tôi." }
+    ]
+  },
+  {
+    id: 2,
+    title: "Unit 1A – Listening",
+    source: "02-Unit_1A_-_Listening_Quiz.pdf",
+    topic: "Nghe hiểu: bốn người nói về tên của họ (Sean, Deborah, James, Philippa)",
+    questions: [
+      { q: "What is Sean's full name?",
+        options: ["Sean James","Sean Gibson","Sean Connery"], answer: 1, answerSource: "file",
+        note: "Theo bài nghe, họ của Sean là Gibson. 'Sean Connery' chỉ là diễn viên mà anh được đặt tên theo, không phải tên anh.",
+        vi: "Tên đầy đủ của Sean là gì? → Sean Gibson." },
+      { q: "Why did Sean's parents call him that?",
+        options: ["Because they liked the name","Because it was a family tradition","Because he was named after the actor Sean Connery"], answer: 2, answerSource: "file",
+        note: "Bố mẹ Sean đặt tên anh theo diễn viên Sean Connery (named after = đặt tên theo ai đó).",
+        vi: "Vì sao bố mẹ Sean gọi anh ấy như vậy? → Vì anh được đặt tên theo diễn viên Sean Connery." },
+      { q: "What nickname did Sean have at school?",
+        options: ["Jim","Sean","Brains"], answer: 2, answerSource: "file",
+        note: "Ở trường Sean được gọi là 'Brains' (biệt danh). 'Sean' là tên thật, không phải nickname.",
+        vi: "Hồi đi học Sean có biệt danh gì? → Brains (\"Bộ óc\")." },
+      { q: "How does Sean feel about his name?",
+        options: ["He likes it","He dislikes it","He wants to change it"], answer: 0, answerSource: "file",
+        note: "Sean nói anh thích tên của mình; không có ý muốn đổi tên.",
+        vi: "Sean cảm thấy thế nào về tên của mình? → Anh ấy thích nó." },
+      { q: "What is Deborah's full name?",
+        options: ["Deborah Ann","Deborah New Jersey","Deborah"], answer: 2, answerSource: "file",
+        note: "Trong bài nghe cô ấy chỉ giới thiệu tên là Deborah. 'New Jersey' là nơi sinh, 'Ann' không được nhắc tới.",
+        vi: "Tên đầy đủ của Deborah là gì? → Deborah." },
+      { q: "Why was Deborah named after a hospital?",
+        options: ["Her father chose the name because it sounded nice","She was born in Deborah Hospital in New Jersey","It was her mother's idea"], answer: 1, answerSource: "file",
+        note: "Cô được đặt tên theo bệnh viện Deborah ở New Jersey, nơi cô sinh ra.",
+        vi: "Vì sao Deborah được đặt tên theo một bệnh viện? → Vì cô sinh ra ở bệnh viện Deborah, bang New Jersey." },
+      { q: "What nickname does Deborah have?",
+        options: ["Debbie or Deb","Deb","Deborah-Ann"], answer: 0, answerSource: "file",
+        note: "Bạn bè gọi cô là Debbie hoặc Deb — cả hai đều được nhắc trong bài nghe, nên đáp án 'Deb' một mình chưa đủ.",
+        vi: "Deborah có biệt danh gì? → Debbie hoặc Deb." },
+      { q: "What is James's full name?",
+        options: ["James Bond","James McAllister","James"], answer: 2, answerSource: "file",
+        note: "Anh ấy chỉ giới thiệu là James. 'James Bond' là nhân vật điện ảnh, dùng làm bẫy.",
+        vi: "Tên đầy đủ của James là gì? → James." },
+      { q: "Why did James's parents choose the name James?",
+        options: ["They named him after someone in the family","It was a popular name at the time","They liked it"], answer: 2, answerSource: "file",
+        note: "Bố mẹ James chọn tên đơn giản vì họ thích nó, không theo truyền thống gia đình hay trào lưu.",
+        vi: "Vì sao bố mẹ James chọn tên James? → Vì họ thích cái tên đó." },
+      { q: "Why did Philippa's parents choose her name?",
+        options: ["They were inspired by a famous person","They heard the name while living in England","It was a common name in Scotland"], answer: 1, answerSource: "file",
+        note: "Bố mẹ Philippa nghe thấy tên này khi đang sống ở Anh (England) và thích nó.",
+        vi: "Vì sao bố mẹ Philippa chọn tên đó? → Họ nghe thấy tên này khi đang sống ở Anh." }
+    ]
+  },
+  {
+    id: 3,
+    title: "Unit 1A – Reading",
+    source: "03-Unit_1A_-_Reading_Quiz.pdf",
+    topic: "Đọc hiểu: bài báo 'Is your name helping or hurting you?'",
+    intro: "Bài đọc nói về một khảo sát ở Anh xếp hạng các tên theo mức thành công, may mắn, hấp dẫn; ảnh hưởng của tên đến điểm số, nghề nghiệp, cơ hội việc làm và cả tuổi thọ; và lời khuyên của chuyên gia về việc có nên đổi tên hay không. (Tóm tắt ngắn — bài gốc nằm trong file PDF của bạn.)",
+    questions: [
+      { q: "What did a recent survey in the UK ask people to rank?",
+        options: ["The most popular first names","The names of the top 6,000 people","The most successful, lucky, and attractive names"], answer: 2, answerSource: "file",
+        note: "Đoạn 1: 6.000 người được yêu cầu xếp hạng tên theo ba tiêu chí successful, lucky, attractive. '6,000' là số người tham gia, không phải danh sách tên.",
+        vi: "Khảo sát gần đây ở Anh yêu cầu mọi người xếp hạng điều gì? → Những cái tên thành công, may mắn và hấp dẫn nhất." },
+      { q: "Which names were considered the most successful?",
+        options: ["Sophie and Ryan","Jack and Lucy","James and Elizabeth"], answer: 2, answerSource: "file",
+        note: "Đoạn 1: James và Elizabeth = thành công nhất; Jack và Lucy = may mắn nhất; Sophie và Ryan = hấp dẫn nhất.",
+        vi: "Những tên nào được xem là thành công nhất? → James và Elizabeth." },
+      { q: "Which two names were ranked the least desirable in all categories?",
+        options: ["George and Ann","Sophie and Ryan","Jack and Lucy"], answer: 0, answerSource: "file",
+        note: "Cuối đoạn 1: George và Ann xếp gần cuối ở cả ba hạng mục.",
+        vi: "Hai tên nào bị xếp kém mong muốn nhất ở mọi hạng mục? → George và Ann." },
+      { q: "What effect do attractive names have on students?",
+        options: ["Teachers give higher marks to students with attractive names","Teachers ignore names when grading","They have no effect"], answer: 0, answerSource: "file",
+        note: "Đoạn 2: nhiều nghiên cứu cho thấy giáo viên chấm điểm cao hơn cho học sinh có tên hấp dẫn.",
+        vi: "Tên hấp dẫn ảnh hưởng thế nào đến học sinh? → Giáo viên cho điểm cao hơn cho học sinh có tên hấp dẫn." },
+      { q: "What is the grading scale used in the US?",
+        options: ["A (excellent) to D (poor)","A (top score) to E (lowest score)","A (excellent) to F (fail)"], answer: 0, answerSource: "file",
+        note: "Đoạn 2 nói rõ thang điểm ở Mỹ đi từ A (excellent) đến D (poor). Chú ý: đáp án bám theo bài đọc, không phải theo thực tế bên ngoài.",
+        vi: "Thang điểm được dùng ở Mỹ là gì? → Từ A (xuất sắc) đến D (kém)." },
+      { q: "What names are more likely to become dentists?",
+        options: ["Art and Sue","Dennis and Denise","James and Elizabeth"], answer: 1, answerSource: "file",
+        note: "Đoạn 3: người tên Dennis và Denise có xu hướng làm nha sĩ (dentist) vì tên nghe giống nghề. Art là nghệ sĩ, Sue Yoo là luật sư.",
+        vi: "Những tên nào dễ trở thành nha sĩ hơn? → Dennis và Denise." },
+      { q: "According to the text, what kind of names do companies prefer in job applicants?",
+        options: ["'Normal-sounding' names","Popular names","Unique-sounding names"], answer: 0, answerSource: "file",
+        note: "Đoạn 3: nhà tuyển dụng Mỹ có xu hướng xem xét CV của ứng viên có tên 'nghe bình thường' (normal-sounding).",
+        vi: "Theo bài đọc, các công ty ưa loại tên nào ở ứng viên? → Những tên 'nghe bình thường'." },
+      { q: "How much longer do people with positive initials tend to live?",
+        options: ["One year longer","Two years longer","Four years longer"], answer: 2, answerSource: "file",
+        note: "Đoạn 4: người có chữ cái đầu 'tích cực' sống lâu hơn trung bình khoảng 4 năm; người có chữ cái đầu 'tiêu cực' mất sớm hơn khoảng 3 năm.",
+        vi: "Người có chữ cái viết tắt tích cực sống lâu hơn bao nhiêu? → Lâu hơn bốn năm." },
+      { q: "What initials are considered 'positive'?",
+        options: ["H.O.P.E. or S.M.I.L.E.","J.O.Y. or F.U.N.","D.I.E. or S.A.D."], answer: 1, answerSource: "file",
+        note: "Đoạn 4 lấy ví dụ J.O.Y. và F.U.N. là tích cực; D.I.E. và S.A.D. là tiêu cực. H.O.P.E./S.M.I.L.E. không xuất hiện trong bài.",
+        vi: "Những chữ cái viết tắt nào được xem là 'tích cực'? → J.O.Y. hoặc F.U.N." },
+      { q: "What do most experts say about changing your name?",
+        options: ["You should always change your name for better prospects","It's a good idea if you have an undesirable name","It's unnecessary, having a positive attitude is more important"], answer: 2, answerSource: "file",
+        note: "Kết bài: hầu hết chuyên gia nói không cần đổi tên; thái độ tích cực giúp ích nhiều hơn một cái tên mới.",
+        vi: "Hầu hết chuyên gia nói gì về việc đổi tên? → Không cần thiết, có thái độ tích cực quan trọng hơn." }
+    ]
+  },
+  {
+    id: 4,
+    title: "Unit 1A – Review",
+    source: "04-Unit_1A_-_REVIEW_Quiz.pdf",
+    topic: "Ôn tập tổng hợp: từ vựng về tên, đại từ, nghe và đọc hiểu",
+    intro: "Câu 11–15 dựa trên bài nghe về Sean, Deborah, Philippa; câu 16–20 dựa trên bài đọc 'Is your name helping or hurting you?' (bài gốc trong file PDF).",
+    questions: [
+      { q: "What is the meaning of the term 'nickname'?",
+        options: ["A person's full or formal name","A title given by others","An informal or shortened version of a name"], answer: 2, answerSource: "file",
+        note: "Nickname = biệt danh, tên gọi thân mật hoặc rút gọn (Deborah → Deb). Không phải tên đầy đủ hay danh hiệu.",
+        vi: "'Nickname' nghĩa là gì? → Một dạng tên gọi thân mật hoặc rút gọn." },
+      { q: "What does it mean when someone is 'named after' another person?",
+        options: ["They use initials instead of a name","They are called by a title","They are given the same name as a famous person"], answer: 2, answerSource: "file",
+        note: "'Named after' = được đặt tên theo ai đó, tức mang cùng tên với người đó (Sean đặt theo Sean Connery).",
+        vi: "'Named after' một người khác nghĩa là gì? → Được đặt cùng tên với một người nổi tiếng." },
+      { q: "What are 'initials'?",
+        options: ["A full name","The first letters of a person's first and last name","A shortened version of a name"], answer: 1, answerSource: "file",
+        note: "Initials = các chữ cái đầu của tên và họ (John Smith → J.S.).",
+        vi: "'Initials' là gì? → Các chữ cái đầu của tên và họ một người." },
+      { q: "Which of the following is a 'brand name'?",
+        options: ["A title or honorific used for a famous person","The name given to a person at birth","The name of a company or product"], answer: 2, answerSource: "file",
+        note: "Brand name = tên thương hiệu của công ty hoặc sản phẩm (Nike, iPhone).",
+        vi: "Đâu là 'brand name'? → Tên của một công ty hoặc sản phẩm." },
+      { q: "Which of the following is most likely to be considered 'outdated' or 'old-fashioned'?",
+        options: ["A new video game","A vintage car","A modern phone"], answer: 1, answerSource: "file",
+        note: "Outdated / old-fashioned = lỗi thời, kiểu cũ. Chỉ 'vintage car' (xe cổ) là đồ cũ; hai lựa chọn kia đều có chữ new/modern.",
+        vi: "Thứ nào dễ bị xem là 'lỗi thời' hoặc 'kiểu cũ'? → Một chiếc xe cổ." },
+      { q: "I'd like you to meet my new boyfriend. ___ name is Tom.",
+        options: ["Their","His","Her"], answer: 1, answerSource: "file",
+        note: "Boyfriend là nam → tính từ sở hữu his.",
+        vi: "Tôi muốn giới thiệu bạn trai mới của tôi. Tên anh ấy là Tom." },
+      { q: "I'm staying at my sister's house when I'm in the UK. I always stay with ___.",
+        options: ["Him","Her","Them"], answer: 1, answerSource: "file",
+        note: "Sister (nữ, số ít) → her.",
+        vi: "Khi ở Anh tôi ở nhà chị gái. Tôi luôn ở cùng chị ấy." },
+      { q: "Can I borrow your book, please? I can't find ___.",
+        options: ["My","His","Mine"], answer: 2, answerSource: "file",
+        note: "Không có danh từ theo sau → đại từ sở hữu mine.",
+        vi: "Cho tôi mượn sách của bạn được không? Tôi không tìm thấy sách của tôi." },
+      { q: "I've got two nieces. ___ names are Sarah and Laura.",
+        options: ["Our","Their","His"], answer: 1, answerSource: "file",
+        note: "Hai cháu gái (số nhiều) → their.",
+        vi: "Tôi có hai cháu gái. Tên của chúng là Sarah và Laura." },
+      { q: "It's my dad's birthday tomorrow. I mustn't forget to call ___.",
+        options: ["He","Him","Her"], answer: 1, answerSource: "file",
+        note: "Dad (nam) làm tân ngữ của 'call' → him.",
+        vi: "Mai là sinh nhật bố tôi. Tôi không được quên gọi cho ông ấy." },
+      { q: "What is Sean's full name?",
+        options: ["Sean Connery","Sean Gibson","Sean James"], answer: 1, answerSource: "file",
+        note: "Theo bài nghe, họ của Sean là Gibson. Sean Connery chỉ là diễn viên anh được đặt tên theo.",
+        vi: "Tên đầy đủ của Sean là gì? → Sean Gibson." },
+      { q: "Why did Sean's parents call him that?",
+        options: ["Because he was named after the actor Sean Connery","Because they liked the name","Because it was a family tradition"], answer: 0, answerSource: "file",
+        note: "Bố mẹ Sean đặt tên anh theo diễn viên Sean Connery.",
+        vi: "Vì sao bố mẹ Sean gọi anh ấy như vậy? → Vì anh được đặt tên theo diễn viên Sean Connery." },
+      { q: "Why was Deborah named after a hospital?",
+        options: ["She was born in Deborah Hospital in New Jersey","Her father chose the name because it sounded nice","It was her mother's idea"], answer: 0, answerSource: "file",
+        note: "Cô sinh ra ở bệnh viện Deborah, bang New Jersey, nên được đặt tên theo bệnh viện.",
+        vi: "Vì sao Deborah được đặt tên theo một bệnh viện? → Vì cô sinh ra ở bệnh viện Deborah, bang New Jersey." },
+      { q: "What nickname does Deborah have?",
+        options: ["Debbie or Deb","Deb","Deborah-Ann"], answer: 0, answerSource: "file",
+        note: "Bài nghe nhắc cả hai biệt danh Debbie và Deb, nên 'Deb' một mình chưa đủ.",
+        vi: "Deborah có biệt danh gì? → Debbie hoặc Deb." },
+      { q: "Why did Philippa's parents choose her name?",
+        options: ["It was a common name in Scotland","They were inspired by a famous person","They heard the name while living in England"], answer: 2, answerSource: "file",
+        note: "Bố mẹ Philippa nghe thấy tên này khi đang sống ở Anh.",
+        vi: "Vì sao bố mẹ Philippa chọn tên đó? → Họ nghe thấy tên này khi đang sống ở Anh." },
+      { q: "Which names were considered the most successful?",
+        options: ["James and Elizabeth","Jack and Lucy","Sophie and Ryan"], answer: 0, answerSource: "file",
+        note: "Đoạn 1 bài đọc: James và Elizabeth = thành công nhất; Jack/Lucy = may mắn; Sophie/Ryan = hấp dẫn.",
+        vi: "Những tên nào được xem là thành công nhất? → James và Elizabeth." },
+      { q: "What effect do attractive names have on students?",
+        options: ["Teachers give higher marks to students with attractive names","They have no effect","Teachers ignore names when grading"], answer: 0, answerSource: "file",
+        note: "Đoạn 2: giáo viên chấm điểm cao hơn cho học sinh có tên hấp dẫn.",
+        vi: "Tên hấp dẫn ảnh hưởng thế nào đến học sinh? → Giáo viên cho điểm cao hơn cho học sinh có tên hấp dẫn." },
+      { q: "What names are more likely to become dentists?",
+        options: ["Dennis and Denise","Art and Sue","James and Elizabeth"], answer: 0, answerSource: "file",
+        note: "Đoạn 3: Dennis và Denise có xu hướng làm nha sĩ vì tên nghe giống 'dentist'.",
+        vi: "Những tên nào dễ trở thành nha sĩ hơn? → Dennis và Denise." },
+      { q: "How much longer do people with positive initials tend to live?",
+        options: ["Two years longer","Four years longer","One year longer"], answer: 1, answerSource: "file",
+        note: "Đoạn 4: người có chữ cái đầu tích cực sống lâu hơn trung bình khoảng 4 năm.",
+        vi: "Người có chữ cái viết tắt tích cực sống lâu hơn bao nhiêu? → Lâu hơn bốn năm." },
+      { q: "What do most experts say about changing your name?",
+        options: ["You should always change your name for better prospects","It's a good idea if you have an undesirable name","It's unnecessary, having a positive attitude is more important"], answer: 2, answerSource: "file",
+        note: "Kết bài: hầu hết chuyên gia nói không cần đổi tên, thái độ tích cực quan trọng hơn.",
+        vi: "Hầu hết chuyên gia nói gì về việc đổi tên? → Không cần thiết, có thái độ tích cực quan trọng hơn." }
+    ]
+  },
+  {
+    id: 5,
+    title: "Mini Test 1",
+    source: "05-MINI_TEST_1_v2_95-100.pdf",
+    topic: "Đại từ, từ vựng về tên & tính cách, so sánh hơn/nhất",
+    intro: "Bài gốc là dạng điền từ và nối câu (không có lựa chọn). Để chơi được trong app, Claude đã tạo thêm các phương án nhiễu; đáp án đúng vẫn lấy từ file, trừ 2 câu file bị chấm sai (có gắn nhãn riêng).",
+    questions: [
+      { q: "Hey! Those are our coffee. I'm sorry, we thought they were ___.",
+        options: ["our", "ours", "us"], answer: 1, answerSource: "file",
+        note: "Sau 'were' không có danh từ → đại từ sở hữu ours (của chúng tôi).",
+        vi: "Này! Đó là cà phê của chúng tôi. Xin lỗi, chúng tôi tưởng chúng là của chúng tôi." },
+      { q: "Sara got a new smartphone for her birthday. Wow! ___ always gets fantastic presents.",
+        options: ["Her", "She", "Hers"], answer: 1, answerSource: "file",
+        note: "Cần chủ ngữ cho động từ 'gets' → she.",
+        vi: "Sara được tặng điện thoại mới nhân sinh nhật. Wow! Cô ấy luôn nhận được những món quà tuyệt vời." },
+      { q: "What are ___ names? He's Ryan, and I think his wife's name is Jessica.",
+        options: ["they", "their", "theirs"], answer: 1, answerSource: "file",
+        note: "Trước danh từ 'names', nói về hai người → tính từ sở hữu their.",
+        vi: "Tên của họ là gì? Anh ấy là Ryan, và tôi nghĩ vợ anh ấy tên Jessica." },
+      { q: "Tom! Are these your keys? No, I've got ___ here.",
+        options: ["my", "mine", "me"], answer: 1, answerSource: "file",
+        note: "Không có danh từ theo sau ('I've got mine' = chìa khóa của tôi) → mine.",
+        vi: "Tom! Đây là chìa khóa của cậu à? Không, tớ có chìa của tớ đây rồi." },
+      { q: "___ name's Joanna W.Evans. Do you know what the W stands for?",
+        options: ["My", "Her", "She"], answer: 1, answerSource: "claude",
+        note: "File gốc điền 'My' và bị chấm sai. Câu sau hỏi 'Do you know what the W stands for?' — người nói không biết chữ W nghĩa là gì, nên đây phải là tên của người khác → her. Nếu là 'My name' thì người nói đã tự biết.",
+        vi: "Tên cô ấy là Joanna W. Evans. Bạn có biết chữ W viết tắt cho gì không?" },
+      { q: "Where's Sylvia? I think these are her glasses. No, they're not Sylvia's. Ask Ben, they might be ___.",
+        options: ["him", "his", "he"], answer: 1, answerSource: "file",
+        note: "Kính có thể là của Ben (nam), không có danh từ theo sau → đại từ sở hữu his.",
+        vi: "Sylvia đâu? Tôi nghĩ đây là kính của cô ấy. Không, không phải của Sylvia. Hỏi Ben đi, có thể là của anh ấy." },
+      { q: "Is this car ___, sir? Of course not! My car is Ferrari.",
+        options: ["your", "yours", "you"], answer: 1, answerSource: "file",
+        note: "'Is this car yours?' = xe này của ông à? → đại từ sở hữu yours.",
+        vi: "Xe này của ông phải không, thưa ông? Dĩ nhiên không! Xe của tôi là Ferrari." },
+      { q: "What's about Mark and Sue? Have you invited ___ to the party? She's coming, but I haven't asked him.",
+        options: ["they", "them", "their"], answer: 1, answerSource: "file",
+        note: "Tân ngữ của 'invited', chỉ Mark và Sue → them.",
+        vi: "Còn Mark và Sue thì sao? Bạn đã mời họ tới tiệc chưa? Cô ấy sẽ đến, nhưng tôi chưa hỏi anh ấy." },
+      { q: "What beautiful flowers! Yes, my boyfriend sent ___ to me.",
+        options: ["they", "them", "it"], answer: 1, answerSource: "file",
+        note: "Flowers số nhiều, làm tân ngữ của 'sent' → them.",
+        vi: "Hoa đẹp quá! Ừ, bạn trai tôi gửi chúng cho tôi." },
+      { q: "I love your daughter's sweater. Her grandmother made ___ for her.",
+        options: ["it", "them", "its"], answer: 0, answerSource: "file",
+        note: "Sweater số ít, làm tân ngữ của 'made' → it.",
+        vi: "Tôi rất thích chiếc áo len của con gái bạn. Bà ngoại đã đan nó cho cô bé." },
+      { q: "Nối định nghĩa: change the general impression of yourself that you give to other people",
+        options: ["go about", "create a new image", "stand out"], answer: 1, answerSource: "file",
+        note: "create a new image = tạo hình ảnh mới về bản thân trong mắt người khác.",
+        vi: "Thay đổi ấn tượng chung mà bạn tạo ra cho người khác → create a new image (tạo hình ảnh mới)." },
+      { q: "Nối định nghĩa: start trying to do something",
+        options: ["go about", "seek to", "feel sorry"], answer: 0, answerSource: "file",
+        note: "go about (doing sth) = bắt tay vào làm việc gì. 'Seek to' chỉ là 'cố gắng', không nhấn vào 'bắt đầu'.",
+        vi: "Bắt đầu cố gắng làm việc gì → go about (bắt tay vào)." },
+      { q: "Nối định nghĩa: information that shows that something is true",
+        options: ["proof", "birth certificate", "solicitor"], answer: 0, answerSource: "file",
+        note: "proof = bằng chứng.",
+        vi: "Thông tin chứng minh điều gì là đúng → proof (bằng chứng)." },
+      { q: "Nối định nghĩa: try to do something",
+        options: ["seek to", "go about", "stand out"], answer: 0, answerSource: "file",
+        note: "seek to (do sth) = cố gắng, tìm cách làm gì.",
+        vi: "Cố gắng làm việc gì → seek to (tìm cách)." },
+      { q: "Nối định nghĩa: be easily seen or noticed",
+        options: ["stand out", "create a new image", "for fun"], answer: 0, answerSource: "file",
+        note: "stand out = nổi bật, dễ được nhận thấy.",
+        vi: "Dễ được nhìn thấy hoặc chú ý → stand out (nổi bật)." },
+      { q: "Nối định nghĩa: a lawyer who prepares legal documents",
+        options: ["solicitor", "proof", "birth certificate"], answer: 0, answerSource: "file",
+        note: "solicitor = luật sư tư vấn, soạn giấy tờ pháp lý (Anh).",
+        vi: "Luật sư chuẩn bị các giấy tờ pháp lý → solicitor." },
+      { q: "Nối định nghĩa: not seriously",
+        options: ["for fun", "feel sorry", "stand out"], answer: 0, answerSource: "file",
+        note: "for fun = cho vui, không nghiêm túc.",
+        vi: "Không nghiêm túc → for fun (cho vui)." },
+      { q: "Nối định nghĩa: the official document that states the date and place where you were born",
+        options: ["birth certificate", "proof", "maiden name"], answer: 0, answerSource: "file",
+        note: "birth certificate = giấy khai sinh.",
+        vi: "Giấy tờ chính thức ghi ngày và nơi sinh → birth certificate (giấy khai sinh)." },
+      { q: "Nối định nghĩa: feel sadness or pity for someone",
+        options: ["feel sorry", "for fun", "seek to"], answer: 0, answerSource: "file",
+        note: "feel sorry (for sb) = thấy thương, tội nghiệp ai.",
+        vi: "Cảm thấy buồn hoặc thương hại ai → feel sorry (thấy thương)." },
+      { q: "Nối định nghĩa: a woman's family name before she gets married",
+        options: ["maiden name", "birth certificate", "create a new image"], answer: 0, answerSource: "file",
+        note: "maiden name = họ thời con gái (trước khi lấy chồng).",
+        vi: "Họ của người phụ nữ trước khi kết hôn → maiden name (họ thời con gái)." },
+      { q: "Jane's husband is really ___. He only ever thinks of himself.",
+        options: ["selfish", "sociable", "cheerful"], answer: 0, answerSource: "file",
+        note: "selfish = ích kỷ; gợi ý: 'only thinks of himself'.",
+        vi: "Chồng của Jane thật ích kỷ. Anh ta chỉ nghĩ đến bản thân." },
+      { q: "Jack is extremely ___. He'd like to be the company director.",
+        options: ["ambitious", "reliable", "bossy"], answer: 0, answerSource: "file",
+        note: "ambitious = tham vọng; muốn làm giám đốc.",
+        vi: "Jack cực kỳ tham vọng. Anh ấy muốn trở thành giám đốc công ty." },
+      { q: "Mike is really ___. He enjoys being with other people.",
+        options: ["sociable", "selfish", "possessive"], answer: 0, answerSource: "file",
+        note: "sociable = hòa đồng, thích giao tiếp.",
+        vi: "Mike rất hòa đồng. Anh ấy thích ở cùng người khác." },
+      { q: "My best friend is very ___. She's always there when I need her.",
+        options: ["reliable", "glamorous", "bossy"], answer: 0, answerSource: "file",
+        note: "reliable = đáng tin cậy; luôn có mặt khi cần.",
+        vi: "Bạn thân của tôi rất đáng tin. Cô ấy luôn ở đó khi tôi cần." },
+      { q: "My brother's wife is very ___. She looks like an actress.",
+        options: ["glamorous", "creative", "cheerful"], answer: 0, answerSource: "file",
+        note: "glamorous = quyến rũ, lộng lẫy như diễn viên.",
+        vi: "Vợ anh trai tôi rất lộng lẫy. Cô ấy trông như diễn viên." },
+      { q: "Anna is really ___. She's made some wonderful sculptures.",
+        options: ["creative", "powerful", "sociable"], answer: 0, answerSource: "file",
+        note: "creative = sáng tạo; làm ra tác phẩm điêu khắc.",
+        vi: "Anna rất sáng tạo. Cô ấy đã làm ra những tác phẩm điêu khắc tuyệt vời." },
+      { q: "My colleague is really ___. She's always telling me what to do.",
+        options: ["bossy", "reliable", "cheerful"], answer: 0, answerSource: "file",
+        note: "bossy = hách dịch, thích sai bảo.",
+        vi: "Đồng nghiệp của tôi rất hách dịch. Cô ấy luôn bảo tôi phải làm gì." },
+      { q: "Dave's girlfriend is very ___. She doesn't let him talk to other girls.",
+        options: ["possessive", "ambitious", "glamorous"], answer: 0, answerSource: "file",
+        note: "possessive = chiếm hữu, ghen.",
+        vi: "Bạn gái của Dave rất chiếm hữu. Cô ấy không cho anh nói chuyện với cô gái khác." },
+      { q: "He's a very ___ businessman. He has a lot of influence over other people.",
+        options: ["powerful", "selfish", "creative"], answer: 0, answerSource: "file",
+        note: "powerful = quyền lực, có ảnh hưởng lớn.",
+        vi: "Ông ấy là doanh nhân rất quyền lực. Ông có ảnh hưởng lớn đến người khác." },
+      { q: "My sister is always ___. She looks happy all the time.",
+        options: ["cheerful", "bossy", "possessive"], answer: 0, answerSource: "file",
+        note: "cheerful = vui vẻ, lúc nào cũng tươi.",
+        vi: "Chị tôi lúc nào cũng vui vẻ. Chị trông hạnh phúc suốt." },
+      { q: "Tom isn't as lucky as his brother. → Tom's brother is ___ than he is.",
+        options: ["luckier", "more lucky", "the luckiest"], answer: 0, answerSource: "file",
+        note: "Tính từ ngắn 'lucky' → so sánh hơn: luckier (y → ier).",
+        vi: "Tom không may mắn bằng anh trai. → Anh trai Tom may mắn hơn cậu ấy." },
+      { q: "Their house is much bigger than ours. → Our house is ___ than theirs.",
+        options: ["much smaller", "much bigger", "the smallest"], answer: 0, answerSource: "file",
+        note: "Đảo nghĩa: bigger → smaller, giữ 'much' để nhấn mạnh.",
+        vi: "Nhà họ to hơn nhà chúng tôi nhiều. → Nhà chúng tôi nhỏ hơn nhà họ nhiều." },
+      { q: "My new password is easier to memorize than my old one. → My old password was ___ to memorize than my new one.",
+        options: ["more difficult", "easier", "the most difficult"], answer: 0, answerSource: "file",
+        note: "Đảo nghĩa easier → more difficult (tính từ dài dùng 'more').",
+        vi: "Mật khẩu mới dễ nhớ hơn mật khẩu cũ. → Mật khẩu cũ khó nhớ hơn mật khẩu mới." },
+      { q: "This flat is nicer than the other two we've looked at. → This flat is ___ of the three we've looked at.",
+        options: ["the nicest", "nicer", "more nice"], answer: 0, answerSource: "file",
+        note: "So sánh với cả nhóm 3 căn → so sánh nhất: the nicest.",
+        vi: "Căn hộ này đẹp hơn hai căn kia. → Căn này đẹp nhất trong ba căn chúng ta đã xem." },
+      { q: "My sister's children are more helpful than mine. → My children aren't ___ as my sister's.",
+        options: ["as helpful", "more helpful", "the most helpful"], answer: 0, answerSource: "file",
+        note: "Cấu trúc not as ... as = không ... bằng.",
+        vi: "Con của chị tôi chăm giúp việc hơn con tôi. → Con tôi không chăm giúp bằng con chị tôi." },
+      { q: "The weather wasn't as good as we'd expected. → The weather was ___ than we'd expected.",
+        options: ["worse", "better", "the worst"], answer: 0, answerSource: "file",
+        note: "Không tốt bằng = tệ hơn; good → bad → worse (bất quy tắc).",
+        vi: "Thời tiết không tốt như chúng tôi mong đợi. → Thời tiết tệ hơn chúng tôi mong đợi." },
+      { q: "The film was much less exciting than the book. → The book was ___ than the film.",
+        options: ["much more exciting", "much less exciting", "the most exciting"], answer: 0, answerSource: "file",
+        note: "Đảo: less exciting → more exciting, giữ 'much'.",
+        vi: "Bộ phim kém hấp dẫn hơn cuốn sách nhiều. → Cuốn sách hấp dẫn hơn bộ phim nhiều." },
+      { q: "Yellow will look better than red for your kitchen. → Red wouldn't look ___ as yellow for your kitchen.",
+        options: ["as good", "better", "the best"], answer: 0, answerSource: "file",
+        note: "not as good as = không đẹp bằng.",
+        vi: "Màu vàng sẽ đẹp hơn màu đỏ cho bếp của bạn. → Màu đỏ sẽ không đẹp bằng màu vàng." },
+      { q: "I'm ___ in class this year than I was last year. (bored)",
+        options: ["less bored", "not as bored", "more boring"], answer: 0, answerSource: "claude",
+        note: "File gốc điền 'not as bored' và bị chấm sai vì câu có 'than' → phải dùng so sánh hơn: less bored (ít chán hơn). 'Not as bored' chỉ đi với 'as', và 'boring' là 'gây chán' chứ không phải 'cảm thấy chán'.",
+        vi: "Năm nay trong lớp tôi ít chán hơn năm ngoái." },
+      { q: "Michelle is ___ person in our office. (quiet)",
+        options: ["the quietest", "quieter", "the most quiet"], answer: 0, answerSource: "file",
+        note: "So sánh nhất với tính từ ngắn: the quietest.",
+        vi: "Michelle là người trầm lặng nhất văn phòng chúng tôi." }
+    ]
+  },
+  {
+    id: 6,
+    title: "Unit 1B – Grammar & Vocabulary",
+    source: "06-Unit_1B_-_Grammar___Vocabulary_Quiz.pdf",
+    topic: "Tính từ chỉ tính cách, so sánh hơn/nhất",
+    questions: [
+      { q: "Which of the following adjectives best describes someone who is always concerned with their own appearance and style?",
+        options: ["Stylish", "Rebellious", "Selfish"], answer: 0, answerSource: "file",
+        note: "stylish = sành điệu, chú trọng ngoại hình và phong cách.",
+        vi: "Tính từ nào mô tả người luôn quan tâm đến ngoại hình và phong cách của mình? → Stylish (sành điệu)." },
+      { q: "Which adjective would best describe someone who shows a lot of creativity?",
+        options: ["Active", "Creative", "Bossy"], answer: 1, answerSource: "file",
+        note: "creative = sáng tạo.",
+        vi: "Tính từ nào mô tả người có nhiều sáng tạo? → Creative." },
+      { q: "It's ___ room in the house.",
+        options: ["biggest", "more biggest", "the biggest"], answer: 2, answerSource: "file",
+        note: "So sánh nhất cần 'the': the biggest. 'More biggest' sai vì dùng cả hai dạng.",
+        vi: "Đó là căn phòng lớn nhất trong nhà." },
+      { q: "I always lose my phone, so I bought a ___ one.",
+        options: ["expensive", "more cheap", "cheaper"], answer: 2, answerSource: "file",
+        note: "Cheap là tính từ ngắn → cheaper, không dùng 'more cheap'.",
+        vi: "Tôi hay làm mất điện thoại nên đã mua một cái rẻ hơn." },
+      { q: "Cats are ___ selfish than dogs.",
+        options: ["more", "most", "least"], answer: 0, answerSource: "file",
+        note: "Có 'than' → so sánh hơn với tính từ dài: more selfish.",
+        vi: "Mèo ích kỷ hơn chó." },
+      { q: "Which adjective is used to describe someone who often makes decisions without thinking about the consequences?",
+        options: ["Assertive", "Responsible", "Impulsive"], answer: 2, answerSource: "file",
+        note: "impulsive = bốc đồng, quyết định không suy nghĩ.",
+        vi: "Tính từ nào chỉ người hay quyết định mà không nghĩ đến hậu quả? → Impulsive (bốc đồng)." },
+      { q: "Mexico is ___ to travel, but the hotels are less expensive.",
+        options: ["further", "farthest", "furthest"], answer: 0, answerSource: "file",
+        note: "Có vế đối lập 'but ... less expensive' → so sánh hơn: further (xa hơn).",
+        vi: "Mexico xa hơn để đi, nhưng khách sạn rẻ hơn." },
+      { q: "This exercise is ___ than the other one.",
+        options: ["easier", "most easy", "easiest"], answer: 0, answerSource: "file",
+        note: "Có 'than' → easier.",
+        vi: "Bài tập này dễ hơn bài kia." },
+      { q: "Which of the following words describes someone who enjoys being around other people?",
+        options: ["Sociable", "Responsible", "Sensitive"], answer: 0, answerSource: "file",
+        note: "sociable = hòa đồng.",
+        vi: "Từ nào chỉ người thích ở cùng người khác? → Sociable (hòa đồng)." },
+      { q: "Which of these adjectives describes someone who can be trusted to do what they say?",
+        options: ["Aggressive", "Reliable", "Impulsive"], answer: 1, answerSource: "file",
+        note: "reliable = đáng tin cậy.",
+        vi: "Tính từ nào chỉ người có thể tin tưởng sẽ làm điều họ nói? → Reliable (đáng tin)." }
+    ]
+  },
+  {
+    id: 7,
+    title: "Unit 1B – Listening",
+    source: "07-Unit_1B_-_Listening_Quiz_1.pdf",
+    topic: "Nghe hiểu: phỏng vấn Wendy Woodward về phân tích màu sắc (colour analysis)",
+    questions: [
+      { q: "Why did Wendy decide to try colour analysis?",
+        options: ["She wanted to look more stylish like her office mate.", "She wanted to change her job.", "She wanted to wear black."], answer: 0, answerSource: "file",
+        note: "Wendy thấy đồng nghiệp trong văn phòng trông sành điệu và muốn được như vậy.",
+        vi: "Vì sao Wendy quyết định thử phân tích màu sắc? → Cô muốn trông sành điệu như đồng nghiệp cùng phòng." },
+      { q: "What did Wendy's office mate tell her about looking stylish?",
+        options: ["She did colour analysis.", "She always wore black.", "She wore a lot of accessories."], answer: 0, answerSource: "file",
+        note: "Bí quyết của đồng nghiệp là đã đi phân tích màu sắc.",
+        vi: "Đồng nghiệp nói gì với Wendy về việc trông sành điệu? → Cô ấy đã đi phân tích màu sắc." },
+      { q: "How did Wendy feel after she started wearing colours that suited her?",
+        options: ["She stopped socializing with friends.", "She became more concerned about her appearance.", "She felt more confident in many aspects of her life."], answer: 2, answerSource: "file",
+        note: "Mặc màu hợp giúp cô tự tin hơn trong nhiều mặt của cuộc sống.",
+        vi: "Wendy cảm thấy thế nào sau khi mặc màu hợp với mình? → Cô tự tin hơn trong nhiều mặt của cuộc sống." },
+      { q: "What did the colour consultant do with Wendy during the session?",
+        options: ["She told Wendy to buy new clothes.", "She gave Wendy new clothes.", "She put scarves in different colours on Wendy."], answer: 2, answerSource: "file",
+        note: "Chuyên gia quàng các khăn màu khác nhau lên Wendy để xem màu nào hợp.",
+        vi: "Chuyên gia màu sắc đã làm gì với Wendy trong buổi tư vấn? → Quàng những chiếc khăn màu khác nhau lên người cô." },
+      { q: "What colours did Wendy learn were best for her as a \"winter person\"?",
+        options: ["Light pastels like yellow and orange.", "Earthy colours like brown and beige.", "Strong colours like dark purple, dark blue, and emerald green."], answer: 2, answerSource: "file",
+        note: "Người thuộc nhóm 'winter' hợp màu đậm, mạnh: tím đậm, xanh đậm, xanh ngọc lục bảo.",
+        vi: "Là 'người mùa đông', Wendy biết màu nào hợp nhất với mình? → Màu mạnh như tím đậm, xanh đậm, xanh ngọc lục bảo." },
+      { q: "Does Wendy still wear black after her colour analysis?",
+        options: ["No, she no longer wears black.", "Yes, she still wears it occasionally.", "Yes, she wears black every day."], answer: 1, answerSource: "file",
+        note: "Cô vẫn thỉnh thoảng mặc đen, không bỏ hẳn và cũng không mặc hằng ngày.",
+        vi: "Wendy còn mặc đồ đen sau khi phân tích màu không? → Có, thỉnh thoảng vẫn mặc." },
+      { q: "What was the first thing Wendy did after her colour analysis?",
+        options: ["She got a couple of T-shirts in her new colours.", "She gave away all her old clothes.", "She bought a complete wardrobe of new clothes."], answer: 0, answerSource: "file",
+        note: "Việc đầu tiên là mua vài chiếc áo thun theo màu mới, chưa thay cả tủ đồ.",
+        vi: "Việc đầu tiên Wendy làm sau khi phân tích màu là gì? → Mua vài chiếc áo thun theo màu mới." },
+      { q: "What was the most frequently used word that people said about Wendy after her colour analysis?",
+        options: ["Glamorous", "Stylish", "Confident"], answer: 0, answerSource: "file",
+        note: "Mọi người hay khen cô 'glamorous' (lộng lẫy) nhất.",
+        vi: "Từ mọi người dùng nhiều nhất để nói về Wendy sau khi phân tích màu? → Glamorous (lộng lẫy)." },
+      { q: "How did Wendy feel about the way she dressed before doing the colour analysis?",
+        options: ["She didn't know what was wrong with her clothing.", "She was very happy with her clothes.", "She felt very stylish."], answer: 0, answerSource: "file",
+        note: "Trước đó cô cảm thấy có gì đó chưa ổn nhưng không biết là gì.",
+        vi: "Trước khi phân tích màu, Wendy thấy thế nào về cách ăn mặc của mình? → Cô không biết quần áo mình có vấn đề gì." },
+      { q: "Who else did Wendy recommend colour analysis to?",
+        options: ["Only her close friends.", "Only her family members.", "Several people in her office and her mother."], answer: 2, answerSource: "file",
+        note: "Cô giới thiệu cho nhiều người ở văn phòng và cả mẹ mình.",
+        vi: "Wendy còn giới thiệu phân tích màu cho ai? → Nhiều người trong văn phòng và mẹ của cô." }
+    ]
+  },
+  {
+    id: 8,
+    title: "Unit 1B – Reading",
+    source: "08-Unit_1B_-_Reading_Quiz_80-100.pdf",
+    topic: "Đọc hiểu: bài 'What colour is Dead Salmon?'",
+    intro: "Bài đọc nói về xu hướng đặt tên kỳ lạ cho màu sắc, lấy ví dụ hãng sơn Farrow & Ball với các màu Dead Salmon, Arsenic, Monkey Puzzle, Cabbage White và câu chuyện đằng sau mỗi tên. (Tóm tắt ngắn — bài gốc nằm trong file PDF của bạn.)",
+    questions: [
+      { q: "What is the main idea of the text?",
+        options: ["The trend of giving colours unusual names", "The scientific study of colours", "The history of colours"], answer: 0, answerSource: "file",
+        note: "Toàn bài nói về xu hướng đặt tên kỳ lạ cho màu sắc và câu chuyện đằng sau các tên đó.",
+        vi: "Ý chính của bài là gì? → Xu hướng đặt tên khác thường cho màu sắc." },
+      { q: "Which colour is described as \"brownish-pink\"?",
+        options: ["Arsenic", "Dead Salmon", "Monkey Puzzle"], answer: 1, answerSource: "file",
+        note: "Dead Salmon được mô tả là màu hồng ngả nâu hấp dẫn.",
+        vi: "Màu nào được mô tả là 'hồng ngả nâu'? → Dead Salmon." },
+      { q: "What does the word \"Dead\" in \"Dead Salmon\" refer to?",
+        options: ["The finish of the paint", "The actual colour", "A type of fish"], answer: 0, answerSource: "file",
+        note: "'Dead' chỉ độ hoàn thiện (finish) của sơn, giống 'matt' hay 'gloss' ngày nay.",
+        vi: "Từ 'Dead' trong 'Dead Salmon' chỉ điều gì? → Độ hoàn thiện (bề mặt) của sơn." },
+      { q: "What was the name of the colour \"Arsenic\" used for in the 18th century?",
+        options: ["A poisonous paint", "A colour used for wallpaper only", "A colour called Paris Green"], answer: 2, answerSource: "file",
+        note: "Cuối thế kỷ 18, arsenic được dùng để tạo màu Paris Green cho sơn và giấy dán tường.",
+        vi: "Màu 'Arsenic' được dùng để tạo màu gì ở thế kỷ 18? → Màu tên Paris Green." },
+      { q: "What historical figure is mentioned in the text in relation to the colour \"Arsenic\"?",
+        options: ["Queen Victoria", "Napoleon", "Winston Churchill"], answer: 1, answerSource: "file",
+        note: "Bài nhắc Napoleon được cho là bị bệnh vì sống trong nhà có tường Paris Green.",
+        vi: "Nhân vật lịch sử nào được nhắc đến liên quan đến màu 'Arsenic'? → Napoleon." },
+      { q: "What does the name \"Monkey Puzzle\" describe?",
+        options: ["A greyish-green colour", "A puzzle game", "A tree that is hard to climb"], answer: 2, answerSource: "file",
+        note: "Đáp án theo file: tên này mô tả loại cây thông rất khó trèo (đến cả khỉ cũng khó). Lưu ý bài đọc cũng dùng tên này cho một màu xanh xám, nhưng đáp án chấm điểm là 'cây'.",
+        vi: "Tên 'Monkey Puzzle' mô tả điều gì? → Một loại cây rất khó trèo." },
+      { q: "What is the connection between the \"Monkey Puzzle\" tree and its name?",
+        options: ["Its tree branches are difficult to climb, even for a monkey", "It was named after a famous monkey", "The tree produces a puzzle-like fruit"], answer: 0, answerSource: "file",
+        note: "Có người nhận xét cây này rất khó trèo, kể cả với khỉ → thành tên.",
+        vi: "Tên cây 'Monkey Puzzle' liên quan gì đến cây? → Cành cây rất khó trèo, kể cả với khỉ." },
+      { q: "What does the name \"Cabbage White\" refer to?",
+        options: ["A butterfly", "A type of paint", "A type of cabbage"], answer: 0, answerSource: "file",
+        note: "Màu này được đặt theo tên loài bướm Cabbage White.",
+        vi: "Tên 'Cabbage White' chỉ điều gì? → Một loài bướm." },
+      { q: "Why is the \"Cabbage White\" butterfly called that?",
+        options: ["Because its caterpillars feed on cabbages", "Because it is often found in cabbage fields", "Because it is a white butterfly"], answer: 0, answerSource: "file",
+        note: "Sâu bướm của loài này ăn bắp cải nên có tên như vậy.",
+        vi: "Vì sao bướm 'Cabbage White' có tên đó? → Vì sâu của nó ăn bắp cải." },
+      { q: "How does the colour \"Cabbage White\" appear?",
+        options: ["White with a slight blueish hint", "White with a slight yellowish tint", "Bright white"], answer: 0, answerSource: "file",
+        note: "Bài mô tả đây là sắc trắng nhẹ có ánh xanh dương.",
+        vi: "Màu 'Cabbage White' trông như thế nào? → Trắng có ánh xanh dương nhẹ." }
+    ]
+  },
+  {
+    id: 9,
+    title: "Unit 2A – Grammar & Vocabulary",
+    source: "11-Unit_2A_-_Grammar___Vocabulary_Quiz_90-100_90711a.pdf",
+    topic: "Đồ dùng du lịch, hiện tại đơn & tiếp diễn, trạng từ tần suất",
+    questions: [
+      { q: "What is a comb used for?",
+        options: ["To apply make-up", "To style your hair", "To cut your nails"], answer: 1, answerSource: "file",
+        note: "comb = cái lược, dùng để chải/tạo kiểu tóc.",
+        vi: "Cái lược dùng để làm gì? → Để chải và tạo kiểu tóc." },
+      { q: "Ben ___ sunscreen all year round, not just in the summer.",
+        options: ["is using", "use", "uses"], answer: 2, answerSource: "file",
+        note: "Thói quen quanh năm → hiện tại đơn; chủ ngữ Ben (ngôi 3 số ít) → uses.",
+        vi: "Ben dùng kem chống nắng quanh năm, không chỉ mùa hè." },
+      { q: "Pay attention! You ___ to me.",
+        options: ["aren't listening", "don't listen", "didn't listen"], answer: 0, answerSource: "file",
+        note: "Đang xảy ra ngay lúc nói ('Pay attention!') → hiện tại tiếp diễn phủ định: aren't listening.",
+        vi: "Chú ý đi! Bạn đang không nghe tôi nói." },
+      { q: "What is an adaptor used for?",
+        options: ["To adjust the temperature", "To dry your hair", "To connect electrical devices"], answer: 2, answerSource: "file",
+        note: "adaptor = bộ chuyển đổi/phích cắm đa năng để kết nối thiết bị điện.",
+        vi: "Adaptor dùng để làm gì? → Để kết nối các thiết bị điện." },
+      { q: "What is a brush typically used for?",
+        options: ["To comb your hair", "To charge a phone", "To clean or style your hair"], answer: 2, answerSource: "file",
+        note: "brush = bàn chải, dùng để chải sạch hoặc tạo kiểu tóc.",
+        vi: "Bàn chải thường dùng để làm gì? → Để làm sạch hoặc tạo kiểu tóc." },
+      { q: "His wife ___ packs his suitcase for him.",
+        options: ["always packs", "always packing", "packs always"], answer: 0, answerSource: "file",
+        note: "Trạng từ tần suất 'always' đứng trước động từ thường: always packs.",
+        vi: "Vợ anh ấy luôn xếp vali cho anh ấy." },
+      { q: "Elizabeth ___ wear make-up on the beach.",
+        options: ["usually doesn't", "don't usually", "doesn't usually"], answer: 2, answerSource: "file",
+        note: "Với câu phủ định, trạng từ tần suất đứng sau trợ động từ: doesn't usually. Chủ ngữ ngôi 3 số ít → doesn't.",
+        vi: "Elizabeth thường không trang điểm khi ở bãi biển." },
+      { q: "What does a guidebook help you with?",
+        options: ["Keeping your food fresh", "Styling your hair", "Finding your way in a new place"], answer: 2, answerSource: "file",
+        note: "guidebook = sách hướng dẫn du lịch, giúp tìm đường ở nơi mới.",
+        vi: "Sách hướng dẫn du lịch giúp bạn việc gì? → Tìm đường ở một nơi mới." },
+      { q: "What are flip flops commonly worn for?",
+        options: ["In the winter", "On your feet, especially in warm weather", "For swimming"], answer: 1, answerSource: "file",
+        note: "flip flops = dép xỏ ngón, mang khi trời ấm.",
+        vi: "Dép xỏ ngón thường được mang khi nào? → Ở chân, đặc biệt khi trời ấm." },
+      { q: "Be quiet! I ___ to read.",
+        options: ["try", "tries", "'m trying"], answer: 2, answerSource: "file",
+        note: "Đang cố đọc ngay lúc nói → hiện tại tiếp diễn: I'm trying.",
+        vi: "Im lặng nào! Tôi đang cố đọc sách." }
+    ]
+  },
+  {
+    id: 10,
+    title: "Unit 2A – Listening",
+    source: "12-Unit_2A_-_Listening_Quiz_80-100.pdf",
+    topic: "Nghe hiểu: phỏng vấn nhân viên an ninh sân bay Mỹ",
+    questions: [
+      { q: "She mentions taking away people's ___.",
+        options: ["perfume and shampoo", "scissors and razors", "food and drink"], answer: 1, answerSource: "file",
+        note: "Nhân viên an ninh tịch thu kéo và dao cạo — vật sắc nhọn bị cấm mang lên máy bay.",
+        vi: "Cô ấy nhắc đến việc tịch thu ___ của hành khách. → kéo và dao cạo." },
+      { q: "When she has to take things away from passengers, she ___.",
+        options: ["thinks it's just a routine part of her job", "enjoys it", "feels bad about it"], answer: 0, answerSource: "file",
+        note: "Cô coi việc tịch thu đồ chỉ là một phần công việc thường ngày.",
+        vi: "Khi phải tịch thu đồ của hành khách, cô ấy ___. → xem đó chỉ là phần việc thường ngày." },
+      { q: "What she likes best about her job is ___.",
+        options: ["keeping the things that she takes away from passengers", "being able to get free flights", "meeting all sorts of different people"], answer: 2, answerSource: "file",
+        note: "Điều cô thích nhất là được gặp đủ loại người khác nhau.",
+        vi: "Điều cô thích nhất ở công việc là ___. → gặp đủ mọi kiểu người." },
+      { q: "Some of her colleagues get angry with people who ___.",
+        options: ["are slow", "are trying to hide things", "are rude"], answer: 0, answerSource: "file",
+        note: "Một số đồng nghiệp bực với hành khách chậm chạp.",
+        vi: "Một số đồng nghiệp của cô bực với những người ___. → chậm chạp." },
+      { q: "Some of her colleagues treat elderly travelers ___.",
+        options: ["with patience", "kindly", "unkindly and shout at them"], answer: 2, answerSource: "file",
+        note: "Một số đồng nghiệp đối xử không tử tế, thậm chí quát người già.",
+        vi: "Một số đồng nghiệp đối xử với hành khách lớn tuổi ___. → không tử tế và quát họ." },
+      { q: "She thinks some screeners can be unfriendly because ___.",
+        options: ["they work long hours", "the rules are always changing", "the job is very repetitive"], answer: 2, answerSource: "file",
+        note: "Công việc lặp đi lặp lại khiến một số nhân viên trở nên khó chịu.",
+        vi: "Cô nghĩ một số nhân viên soi chiếu không thân thiện vì ___. → công việc rất lặp đi lặp lại." },
+      { q: "The screener finds it emotionally exhausting because of ___.",
+        options: ["the repetition in the job", "making the same mistake", "the long working hours"], answer: 0, answerSource: "file",
+        note: "Sự lặp lại trong công việc làm cô mệt mỏi về tinh thần.",
+        vi: "Nhân viên soi chiếu thấy mệt mỏi tinh thần vì ___. → sự lặp lại trong công việc." },
+      { q: "One thing that annoys her about passengers is that ___.",
+        options: ["they complain about travelling", "they get aggressive", "they don't know the rules"], answer: 2, answerSource: "file",
+        note: "Điều làm cô khó chịu là hành khách không biết quy định.",
+        vi: "Một điều khiến cô khó chịu về hành khách là ___. → họ không biết các quy định." },
+      { q: "Passengers are most polite to the security screeners ___.",
+        options: ["late at night", "in the afternoon", "early in the morning"], answer: 2, answerSource: "file",
+        note: "Buổi sáng sớm hành khách lịch sự nhất.",
+        vi: "Hành khách lịch sự nhất với nhân viên an ninh vào ___. → sáng sớm." },
+      { q: "In the afternoon, passengers become ___ and unfriendly.",
+        options: ["stressed", "relaxed", "more polite"], answer: 0, answerSource: "file",
+        note: "Buổi chiều hành khách trở nên căng thẳng và kém thân thiện.",
+        vi: "Buổi chiều, hành khách trở nên ___ và kém thân thiện. → căng thẳng." }
+    ]
+  },
+  {
+    id: 11,
+    title: "Unit 2A – Review",
+    source: "14-Unit_2A_-_REVIEW_Quiz_100-100_b81007.pdf",
+    topic: "Ôn tập: đồ dùng, thì hiện tại, nghe và đọc hiểu",
+    intro: "Câu 11–15 dựa trên bài nghe về nhân viên an ninh sân bay; câu 16–20 dựa trên hai bài đọc ngắn về khảo sát du lịch: thói quen nghỉ mát của các quốc tịch và cách chủ khách sạn đánh giá du khách (bài gốc trong file PDF).",
+    questions: [
+      { q: "What is insect repellent used for?",
+        options: ["To clean your face", "To repel insects", "To make your clothes smell good"], answer: 1, answerSource: "file",
+        note: "insect repellent = thuốc chống côn trùng.",
+        vi: "Thuốc chống côn trùng dùng để làm gì? → Để xua đuổi côn trùng." },
+      { q: "What is make-up used for?",
+        options: ["To clean your nails", "To improve the appearance of your skin and face", "To moisturize your skin"], answer: 1, answerSource: "file",
+        note: "make-up = mỹ phẩm trang điểm, làm đẹp da và mặt.",
+        vi: "Đồ trang điểm dùng để làm gì? → Để cải thiện vẻ ngoài của da và khuôn mặt." },
+      { q: "What do you store on a memory card?",
+        options: ["Food", "Photographs or data", "Clothes"], answer: 1, answerSource: "file",
+        note: "memory card = thẻ nhớ, lưu ảnh và dữ liệu.",
+        vi: "Bạn lưu gì trên thẻ nhớ? → Ảnh hoặc dữ liệu." },
+      { q: "What are nail scissors used for?",
+        options: ["To brush your teeth", "To cut your hair", "To trim your nails"], answer: 2, answerSource: "file",
+        note: "nail scissors = kéo cắt móng.",
+        vi: "Kéo cắt móng dùng để làm gì? → Để tỉa móng tay." },
+      { q: "What is a raincoat designed to protect you from?",
+        options: ["Cold", "Heat", "Rain"], answer: 2, answerSource: "file",
+        note: "raincoat = áo mưa.",
+        vi: "Áo mưa được thiết kế để bảo vệ bạn khỏi gì? → Mưa." },
+      { q: "My boyfriend ___ in a hurry.",
+        options: ["is never", "be never", "never is"], answer: 0, answerSource: "file",
+        note: "Với động từ 'be', trạng từ tần suất đứng sau: is never.",
+        vi: "Bạn trai tôi không bao giờ vội vàng." },
+      { q: "Sam and Richard ___ hiking every weekend.",
+        options: ["go", "are going", "goes"], answer: 0, answerSource: "file",
+        note: "Thói quen 'every weekend' → hiện tại đơn; chủ ngữ số nhiều → go.",
+        vi: "Sam và Richard đi bộ đường dài mỗi cuối tuần." },
+      { q: "Who ___ to?",
+        options: ["your girlfriend is talking to", "is your girlfriend talk", "is your girlfriend talking"], answer: 2, answerSource: "file",
+        note: "Câu hỏi hiện tại tiếp diễn: Who is + S + V-ing... to?",
+        vi: "Bạn gái của bạn đang nói chuyện với ai vậy?" },
+      { q: "My brother ___ good French because he has lived in France.",
+        options: ["is speaking", "speak", "speaks"], answer: 2, answerSource: "file",
+        note: "Khả năng/sự thật lâu dài → hiện tại đơn; ngôi 3 số ít → speaks.",
+        vi: "Anh trai tôi nói tiếng Pháp giỏi vì anh ấy từng sống ở Pháp." },
+      { q: "___ to the same place on holiday every year?",
+        options: ["You go", "Are you going", "Do you go"], answer: 2, answerSource: "file",
+        note: "Thói quen 'every year' → câu hỏi hiện tại đơn: Do you go...?",
+        vi: "Bạn có đi nghỉ ở cùng một nơi mỗi năm không?" },
+      { q: "She mentions taking away people's ___.",
+        options: ["perfume and shampoo", "scissors and razors", "food and drink"], answer: 1, answerSource: "file",
+        note: "Nhân viên an ninh tịch thu kéo và dao cạo.",
+        vi: "Cô ấy nhắc đến việc tịch thu ___ của hành khách. → kéo và dao cạo." },
+      { q: "What she likes best about her job is ___.",
+        options: ["keeping the things that she takes away from passengers", "meeting all sorts of different people", "being able to get free flights"], answer: 1, answerSource: "file",
+        note: "Cô thích nhất là gặp đủ loại người.",
+        vi: "Điều cô thích nhất ở công việc là ___. → gặp đủ mọi kiểu người." },
+      { q: "Some of her colleagues get angry with people who ___.",
+        options: ["are rude", "are trying to hide things", "are slow"], answer: 2, answerSource: "file",
+        note: "Đồng nghiệp bực với hành khách chậm chạp.",
+        vi: "Một số đồng nghiệp của cô bực với những người ___. → chậm chạp." },
+      { q: "She thinks some screeners can be unfriendly because ___.",
+        options: ["the job is very repetitive", "the rules are always changing", "they work long hours"], answer: 0, answerSource: "file",
+        note: "Công việc lặp đi lặp lại khiến họ khó chịu.",
+        vi: "Cô nghĩ một số nhân viên soi chiếu không thân thiện vì ___. → công việc rất lặp đi lặp lại." },
+      { q: "Passengers are most polite to the security screeners ___.",
+        options: ["early in the morning", "late at night", "in the afternoon"], answer: 0, answerSource: "file",
+        note: "Sáng sớm hành khách lịch sự nhất.",
+        vi: "Hành khách lịch sự nhất với nhân viên an ninh vào ___. → sáng sớm." },
+      { q: "What is the most popular holiday activity among all nationalities in the survey?",
+        options: ["Hiking", "Cycling", "Beach holidays"], answer: 2, answerSource: "file",
+        note: "Bài đọc 1: bãi biển là điểm đến dẫn đầu tuyệt đối ở mọi quốc tịch.",
+        vi: "Hoạt động nghỉ mát phổ biến nhất ở mọi quốc tịch trong khảo sát? → Nghỉ ở bãi biển." },
+      { q: "What is the least common holiday activity among Americans according to the text?",
+        options: ["Hiking", "Museum tours", "Sunbathing"], answer: 2, answerSource: "file",
+        note: "Chỉ 1/10 người Mỹ tắm nắng vì lo ung thư da.",
+        vi: "Hoạt động ít phổ biến nhất với người Mỹ theo bài? → Tắm nắng." },
+      { q: "According to a survey by Expedia, which nationality is considered the best tourist overall?",
+        options: ["Japanese", "British", "Canadians"], answer: 0, answerSource: "file",
+        note: "Khảo sát Expedia xếp người Nhật là du khách tốt nhất thế giới; Anh và Canada xếp 2, 3.",
+        vi: "Theo khảo sát của Expedia, quốc tịch nào là du khách tốt nhất? → Người Nhật." },
+      { q: "How are the French viewed in terms of their tourist behaviour?",
+        options: ["The most impolite and meanest tippers", "Tidy and quiet", "Polite and generous"], answer: 0, answerSource: "file",
+        note: "Người Pháp bị xem là kém lịch sự nhất và keo kiệt tiền boa nhất.",
+        vi: "Người Pháp được nhìn nhận thế nào về hành vi du lịch? → Kém lịch sự nhất và boa keo kiệt nhất." },
+      { q: "Which nationality is considered the tidiest among tourists?",
+        options: ["French", "British", "Japanese"], answer: 2, answerSource: "file",
+        note: "Nhật, Đức, Anh là gọn gàng nhất; Mỹ xếp cuối.",
+        vi: "Quốc tịch nào được xem là gọn gàng nhất? → Người Nhật." }
+    ]
+  },
+  {
+    id: 12,
+    title: "Mini Test 2",
+    source: "15-Mini_test_2_100-100_1.pdf",
+    topic: "Tính từ, cửa hàng, thì hiện tại, sở hữu, so sánh",
+    intro: "Câu 1–16 gốc là dạng điền từ và nối; Claude đã tạo phương án nhiễu để chơi được trong app. Đáp án đúng lấy từ file (bài đạt 31/31).",
+    questions: [
+      { q: "My grandmother is extremely ___.",
+        options: ["glamorous", "moody", "risky"], answer: 0, answerSource: "file",
+        note: "glamorous = lộng lẫy, quyến rũ.",
+        vi: "Bà tôi cực kỳ lộng lẫy." },
+      { q: "Teenagers can be very ___.",
+        options: ["moody", "suitable", "luxurious"], answer: 0, answerSource: "file",
+        note: "moody = hay thay đổi tâm trạng, ủ rũ.",
+        vi: "Thanh thiếu niên có thể rất thất thường." },
+      { q: "Don't be so ___.",
+        options: ["childish", "impressive", "creative"], answer: 0, answerSource: "file",
+        note: "childish = trẻ con, ấu trĩ.",
+        vi: "Đừng trẻ con như vậy." },
+      { q: "She's very ___. She won't do anything stupid.",
+        options: ["sensible", "stressful", "childish"], answer: 0, answerSource: "file",
+        note: "sensible = khôn ngoan, biết điều; gợi ý 'won't do anything stupid'.",
+        vi: "Cô ấy rất khôn ngoan. Cô sẽ không làm gì ngu ngốc." },
+      { q: "He's always been ___. He loves painting.",
+        options: ["creative", "sensible", "moody"], answer: 0, answerSource: "file",
+        note: "creative = sáng tạo; thích vẽ tranh.",
+        vi: "Anh ấy luôn sáng tạo. Anh ấy thích vẽ." },
+      { q: "Their car's not really ___ for a family of four.",
+        options: ["suitable", "glamorous", "impressive"], answer: 0, answerSource: "file",
+        note: "suitable (for) = phù hợp.",
+        vi: "Xe của họ không thật sự phù hợp cho gia đình bốn người." },
+      { q: "Our hotel room was ___.",
+        options: ["luxurious", "risky", "childish"], answer: 0, answerSource: "file",
+        note: "luxurious = sang trọng.",
+        vi: "Phòng khách sạn của chúng tôi rất sang trọng." },
+      { q: "Work is very ___ at the moment.",
+        options: ["stressful", "suitable", "creative"], answer: 0, answerSource: "file",
+        note: "stressful = căng thẳng.",
+        vi: "Công việc hiện tại rất căng thẳng." },
+      { q: "It's a bit ___ to carry so much money.",
+        options: ["risky", "luxurious", "sensible"], answer: 0, answerSource: "file",
+        note: "risky = rủi ro, nguy hiểm.",
+        vi: "Mang nhiều tiền như vậy hơi rủi ro." },
+      { q: "Her Russian is very ___.",
+        options: ["impressive", "stressful", "moody"], answer: 0, answerSource: "file",
+        note: "impressive = ấn tượng.",
+        vi: "Tiếng Nga của cô ấy rất ấn tượng." },
+      { q: "Where can we buy flowers?",
+        options: ["florist's", "baker's", "chemist's"], answer: 0, answerSource: "file",
+        note: "florist's = tiệm hoa.",
+        vi: "Hoa → mua ở tiệm hoa (florist's)." },
+      { q: "Where can we buy newspaper?",
+        options: ["newsagent's", "estate agent's", "butcher's"], answer: 0, answerSource: "file",
+        note: "newsagent's = sạp báo.",
+        vi: "Báo → mua ở sạp báo (newsagent's)." },
+      { q: "Where can we buy a house?",
+        options: ["estate agent's", "florist's", "baker's"], answer: 0, answerSource: "file",
+        note: "estate agent's = văn phòng môi giới bất động sản.",
+        vi: "Nhà → mua qua văn phòng bất động sản (estate agent's)." },
+      { q: "Where can we buy meat?",
+        options: ["butcher's", "chemist's", "newsagent's"], answer: 0, answerSource: "file",
+        note: "butcher's = hàng thịt.",
+        vi: "Thịt → mua ở hàng thịt (butcher's)." },
+      { q: "Where can we buy bread?",
+        options: ["baker's", "butcher's", "estate agent's"], answer: 0, answerSource: "file",
+        note: "baker's = tiệm bánh mì.",
+        vi: "Bánh mì → mua ở tiệm bánh (baker's)." },
+      { q: "Where can we buy medicine?",
+        options: ["chemist's", "florist's", "baker's"], answer: 0, answerSource: "file",
+        note: "chemist's = hiệu thuốc.",
+        vi: "Thuốc → mua ở hiệu thuốc (chemist's)." },
+      { q: "Where ___ on holiday this summer?",
+        options: ["do you go", "are you going", "you go"], answer: 1, answerSource: "file",
+        note: "Kế hoạch tương lai gần 'this summer' → hiện tại tiếp diễn: are you going.",
+        vi: "Hè này bạn sẽ đi nghỉ ở đâu?" },
+      { q: "___ our grandparents next weekend.",
+        options: ["we visit", "We're visit", "We're visiting"], answer: 2, answerSource: "file",
+        note: "Kế hoạch 'next weekend' → hiện tại tiếp diễn: We're visiting.",
+        vi: "Cuối tuần tới chúng tôi sẽ đi thăm ông bà." },
+      { q: "I love looking at other ___ family photos.",
+        options: ["people'", "peoples'", "people's"], answer: 2, answerSource: "file",
+        note: "'People' đã là số nhiều → sở hữu thêm 's: people's.",
+        vi: "Tôi thích xem ảnh gia đình của người khác." },
+      { q: "What's the ___ where you were born?",
+        options: ["village's name", "village name", "name of the village"], answer: 2, answerSource: "file",
+        note: "Với vật/nơi chốn dùng 'the name of the village', không dùng 's.",
+        vi: "Tên ngôi làng nơi bạn sinh ra là gì?" },
+      { q: "We grow all ___.",
+        options: ["our own vegetables", "the own vegetables", "ours own vegetables"], answer: 0, answerSource: "file",
+        note: "'own' đi sau tính từ sở hữu: our own.",
+        vi: "Chúng tôi tự trồng tất cả rau của mình." },
+      { q: "What are ___ surnames?",
+        options: ["theirs", "them", "their"], answer: 2, answerSource: "file",
+        note: "Trước danh từ 'surnames' → tính từ sở hữu their.",
+        vi: "Họ của họ là gì?" },
+      { q: "He made ___.",
+        options: ["for me coffee", "coffee for me", "coffee to me"], answer: 1, answerSource: "file",
+        note: "make + sth + for + sb: made coffee for me.",
+        vi: "Anh ấy pha cà phê cho tôi." },
+      { q: "My sister ___.",
+        options: ["lent them to us", "them lent to we", "lent to we them"], answer: 0, answerSource: "file",
+        note: "lend + sth + to + sb; sau 'to' dùng tân ngữ 'us'.",
+        vi: "Chị tôi cho chúng tôi mượn chúng." },
+      { q: "The red shoes are nice, but I prefer those ___.",
+        options: ["blues ones", "blue ones", "blue one"], answer: 1, answerSource: "file",
+        note: "'those' số nhiều → ones; tính từ không thêm s.",
+        vi: "Đôi giày đỏ đẹp, nhưng tôi thích đôi màu xanh hơn." },
+      { q: "He's ___ man I've ever met.",
+        options: ["the most bossy", "bossier than", "the bossiest"], answer: 2, answerSource: "file",
+        note: "'I've ever met' → so sánh nhất; bossy là tính từ ngắn → the bossiest.",
+        vi: "Anh ta là người đàn ông hách dịch nhất tôi từng gặp." },
+      { q: "She's ___ in her new job than she was before.",
+        options: ["more happier", "much more happy", "much happier"], answer: 2, answerSource: "file",
+        note: "happy → happier; 'much' nhấn mạnh; không dùng 'more happier'.",
+        vi: "Cô ấy hạnh phúc hơn nhiều ở công việc mới so với trước." },
+      { q: "The film was ___ than the book.",
+        options: ["bit better", "a bit better", "bit more better"], answer: 1, answerSource: "file",
+        note: "'a bit' + so sánh hơn: a bit better.",
+        vi: "Bộ phim hay hơn cuốn sách một chút." },
+      { q: "___ a word he says.",
+        options: ["I don't believe", "I'm not believe", "I am not believing"], answer: 0, answerSource: "file",
+        note: "'believe' là động từ trạng thái, không dùng tiếp diễn → I don't believe.",
+        vi: "Tôi không tin một lời nào anh ta nói." },
+      { q: "You look worried. What ___ about?",
+        options: ["are you thinking", "you are thinking", "do you think"], answer: 0, answerSource: "file",
+        note: "Đang nghĩ ngay lúc này → hiện tại tiếp diễn dạng câu hỏi: are you thinking.",
+        vi: "Trông bạn lo lắng. Bạn đang nghĩ về chuyện gì vậy?" },
+      { q: "I emailed ___ the photos.",
+        options: ["she", "her", "hers"], answer: 1, answerSource: "file",
+        note: "Tân ngữ của 'emailed' → her.",
+        vi: "Tôi đã gửi email những bức ảnh cho cô ấy." }
+    ]
+  },
+  {
+    id: 13,
+    title: "Unit 2B – Grammar & Vocabulary",
+    source: "17-Unit_2B_-_Grammar___Vocabulary_Quiz_100-100.pdf",
+    topic: "Tên cửa hàng, sở hữu cách 's và 'of'",
+    questions: [
+      { q: "Where can you buy medicine and health-related products?",
+        options: ["Chemist's", "Delicatessen", "Fishmonger's"], answer: 0, answerSource: "file",
+        note: "chemist's = hiệu thuốc.",
+        vi: "Bạn có thể mua thuốc và sản phẩm sức khỏe ở đâu? → Hiệu thuốc." },
+      { q: "Which sentence is grammatically correct?",
+        options: ["That's my friend's car over there.", "That's the car of my friend over there.", "That's car my friend's over there."], answer: 0, answerSource: "file",
+        note: "Với người dùng sở hữu cách 's: my friend's car.",
+        vi: "Câu nào đúng ngữ pháp? → Đó là xe của bạn tôi ở đằng kia." },
+      { q: "Where would you go to buy fresh fish?",
+        options: ["Baker's", "Newsagent's", "Fishmonger's"], answer: 2, answerSource: "file",
+        note: "fishmonger's = hàng cá.",
+        vi: "Bạn sẽ đến đâu để mua cá tươi? → Hàng cá." },
+      { q: "Which sentence is grammatically correct?",
+        options: ["I live in the top of the building.", "I live at the top of the building.", "I live in the flat at the building's top."], answer: 1, answerSource: "file",
+        note: "Với vật dùng 'the top of the building' và giới từ 'at the top'.",
+        vi: "Câu nào đúng ngữ pháp? → Tôi sống ở tầng trên cùng của tòa nhà." },
+      { q: "Which sentence is grammatically correct?",
+        options: ["I quite like supermarket pizza but I prefer to make my own.", "I quite like supermarket pizza but I prefer to make own mine", "I quite like supermarket pizza but I prefer to make mine own."], answer: 0, answerSource: "file",
+        note: "'my own' = của riêng tôi; 'own' đi sau tính từ sở hữu.",
+        vi: "Câu nào đúng? → Tôi khá thích pizza siêu thị nhưng thích tự làm hơn." },
+      { q: "Which sentence is grammatically correct?",
+        options: ["He still does all their own shopping.", "He still does all her own shopping.", "He still does all his own shopping."], answer: 2, answerSource: "file",
+        note: "Chủ ngữ He → his own.",
+        vi: "Câu nào đúng? → Ông ấy vẫn tự đi mua sắm." },
+      { q: "Where can you have clothes cleaned?",
+        options: ["Market stall", "Dry cleaner's", "DIY store"], answer: 1, answerSource: "file",
+        note: "dry cleaner's = tiệm giặt khô.",
+        vi: "Bạn có thể giặt quần áo ở đâu? → Tiệm giặt khô." },
+      { q: "Which place would you visit to buy fruits and vegetables?",
+        options: ["Jeweller's", "Estate agent's", "Greengrocer's"], answer: 2, answerSource: "file",
+        note: "greengrocer's = hàng rau quả.",
+        vi: "Bạn đến đâu để mua rau củ quả? → Hàng rau quả." },
+      { q: "Which sentence is grammatically correct?",
+        options: ["I can't remember the name of the book.", "I can't remember the book's name.", "I can't remember the book name."], answer: 0, answerSource: "file",
+        note: "Với vật dùng 'the name of the book'.",
+        vi: "Câu nào đúng? → Tôi không nhớ tên cuốn sách." },
+      { q: "Where would you go to buy fresh flowers?",
+        options: ["Florist's", "Greengrocer's", "Butcher's"], answer: 0, answerSource: "file",
+        note: "florist's = tiệm hoa.",
+        vi: "Bạn đến đâu để mua hoa tươi? → Tiệm hoa." }
+    ]
+  },
+  {
+    id: 14,
+    title: "Unit 2B – Listening",
+    source: "18-Unit_2B-_Listening_Quiz_90-100.pdf",
+    topic: "Nghe: bốn người nói về phố mua sắm ở địa phương",
+    intro: "Bài nghe có bốn người: Harry (Hereford, Anh), Kate (Toronto, Canada), Ken (Kobe, Nhật) và Bea (Valencia, Tây Ban Nha) nói về phố mua sắm nơi họ sống. Bài gốc đạt 9/10: câu 3 bạn chọn sai nhưng Moodle vẫn hiện đáp án đúng nên vẫn lấy từ file.",
+    questions: [
+      { q: "Where does Harry live?",
+        options: ["In Kobe", "In Hereford", "In Toronto"], answer: 1, answerSource: "file",
+        note: "Harry là người đầu tiên nói, anh sống ở Hereford (Anh). Kobe là của Ken, Toronto là của Kate.",
+        vi: "Harry sống ở đâu? → Ở Hereford." },
+      { q: "What is a concern that Harry has about the new shopping centre?",
+        options: ["It will make shopping more convenient for everyone.", "It will provide more opportunities for local shops.", "It will harm the high street and lead to empty stores."], answer: 2, answerSource: "file",
+        note: "'Concern' = mối lo ngại. Harry lo trung tâm mua sắm mới sẽ làm hại phố chính (high street), khiến cửa hàng đóng cửa, để trống. Hai phương án còn lại là ý tích cực, không phải 'lo ngại'.",
+        vi: "Harry lo ngại điều gì về trung tâm mua sắm mới? → Nó sẽ làm hại phố chính và khiến nhiều cửa hàng bỏ trống." },
+      { q: "What type of shops are mentioned in Kate's local shopping street in Toronto?",
+        options: ["Delicatessens and pharmacies", "Butcher's and hardware stores", "Baker's and greengrocer's"], answer: 0, answerSource: "file",
+        note: "Kate nhắc đến delicatessen (tiệm thực phẩm ngon/đặc sản) và pharmacy (hiệu thuốc). Câu này bài gốc bạn chọn 'Butcher's and hardware stores' nên bị 0 điểm; đáp án đúng do Moodle hiển thị.",
+        vi: "Phố mua sắm của Kate ở Toronto có những loại cửa hàng nào? → Tiệm thực phẩm đặc sản và hiệu thuốc." },
+      { q: "Why are small independent shops in Toronto struggling?",
+        options: ["The stores have been closing down.", "People prefer to shop online.", "People are going to big indoor malls and supermarkets."], answer: 2, answerSource: "file",
+        note: "'Struggling' = gặp khó khăn. Nguyên nhân là người dân đi trung tâm thương mại trong nhà và siêu thị lớn. 'Đóng cửa' là hậu quả chứ không phải nguyên nhân; mua online thì Kate nói ở Canada không tiện.",
+        vi: "Vì sao các cửa hàng nhỏ độc lập ở Toronto gặp khó khăn? → Vì mọi người đi các trung tâm thương mại lớn trong nhà và siêu thị." },
+      { q: "What is a challenge to online shopping in Canada, according to Kate?",
+        options: ["Many people prefer shopping in person.", "Postal and overnight delivery aren't practical due to long distances.", "It's too expensive."], answer: 1, answerSource: "file",
+        note: "Canada rất rộng, khoảng cách xa nên giao hàng qua bưu điện hay giao qua đêm không thực tế. 'Practical' = thực tế, khả thi.",
+        vi: "Theo Kate, khó khăn của mua sắm online ở Canada là gì? → Giao hàng bưu điện và giao qua đêm không thực tế vì khoảng cách quá xa." },
+      { q: "What type of shops does Ken prefer to shop at in Kobe?",
+        options: ["Small independent shops like baker's and greengrocer's", "Online stores", "Large department stores that sell everything"], answer: 2, answerSource: "file",
+        note: "Ken thích các cửa hàng bách hóa lớn (department store) bán đủ mọi thứ. 'Prefer' = thích hơn.",
+        vi: "Ken thích mua sắm ở loại cửa hàng nào tại Kobe? → Cửa hàng bách hóa lớn bán mọi thứ." },
+      { q: "What does Ken think about the disappearance of small independent shops in Kobe?",
+        options: ["He doesn't care because he shops online.", "He is very sad about it.", "He thinks better things are replacing them."], answer: 2, answerSource: "file",
+        note: "Ken không buồn: anh cho rằng những thứ tốt hơn đang thay thế các cửa hàng nhỏ. 'Disappearance' = sự biến mất; 'replace' = thay thế.",
+        vi: "Ken nghĩ gì về việc các cửa hàng nhỏ ở Kobe biến mất? → Anh nghĩ những thứ tốt hơn đang thay thế chúng." },
+      { q: "What is Bea's favourite shopping area in Valencia?",
+        options: ["A shopping mall outside the city", "A local street near her home", "Calle Colón"], answer: 2, answerSource: "file",
+        note: "Bea thích nhất Calle Colón – con phố mua sắm lớn ở trung tâm Valencia ('calle' tiếng Tây Ban Nha = phố).",
+        vi: "Khu mua sắm yêu thích của Bea ở Valencia là gì? → Phố Calle Colón." },
+      { q: "What does Bea think about small local shops in Valencia?",
+        options: ["They are all closing down.", "They are doing quite well.", "They are mostly out of town."], answer: 1, answerSource: "file",
+        note: "Khác với Anh và Canada, ở Valencia các cửa hàng nhỏ vẫn làm ăn khá tốt ('doing quite well').",
+        vi: "Bea nghĩ gì về các cửa hàng nhỏ ở Valencia? → Chúng làm ăn khá tốt." },
+      { q: "What are two problems Bea finds with small shops in Spain?",
+        options: ["They are too far from her home and often run out of stock.", "They don't offer enough variety and are very expensive.", "They close at lunchtime and have poor customer service."], answer: 2, answerSource: "file",
+        note: "Hai điều Bea không thích: cửa hàng đóng cửa vào giờ trưa (siesta) và dịch vụ khách hàng kém. 'Customer service' = dịch vụ khách hàng.",
+        vi: "Hai vấn đề Bea thấy ở các cửa hàng nhỏ tại Tây Ban Nha là gì? → Chúng đóng cửa vào giờ trưa và phục vụ khách kém." }
+    ]
+  },
+  {
+    id: 15,
+    title: "Unit 2B – Reading",
+    source: "19-Unit_2B_-_Reading_Quiz_100-100.pdf",
+    topic: "Đọc hiểu: ba người bán hàng trên một trang mua sắm ở Anh",
+    intro: "Bài đọc giới thiệu ba người bán hàng trên trang NotOnTheHighStreet.com: Kresse Wesling (cùng chồng tái chế vòi cứu hỏa cũ thành túi, ví, thắt lưng – 'upcycling'; bắt đầu từ một căn phòng ở Brixton, London; 50% lợi nhuận tặng quỹ lính cứu hỏa), Abigail Bryans (làm biển gỗ có câu nói dí dỏm; khởi nghiệp khi thất nghiệp nuôi ba con nhỏ, nhờ lời khuyên của bạn 'đừng sợ thất bại'; làm việc tại bàn bếp ở nam London) và Edwina Cooper (bị đột quỵ, tưởng không vẽ được nữa nhưng hồi phục; nay vẽ tay gối tựa tại nhà trên đảo Wight). (Tóm tắt ngắn — bài gốc nằm trong file PDF của bạn.)",
+    questions: [
+      { q: "What is Kresse Wesling's business primarily focused on?",
+        options: ["Painting cushions", "Upcycling", "Selling wooden signs"], answer: 1, answerSource: "file",
+        note: "Kresse và chồng xây dựng toàn bộ việc kinh doanh quanh 'upcycling' – tái chế vật liệu cũ (vòi cứu hỏa) thành đồ mới. Vẽ gối là Edwina, biển gỗ là Abigail.",
+        vi: "Việc kinh doanh của Kresse Wesling chủ yếu tập trung vào gì? → Tái chế nâng cấp (upcycling)." },
+      { q: "How did Kresse Wesling's business begin?",
+        options: ["It began in a small room in Brixton, London.", "She started by selling products online.", "She started in a large workshop."], answer: 0, answerSource: "file",
+        note: "Bài nói việc kinh doanh bắt đầu trong một căn phòng duy nhất nơi họ sống ở Brixton, London; xưởng lớn là hiện tại, không phải lúc bắt đầu.",
+        vi: "Việc kinh doanh của Kresse Wesling bắt đầu như thế nào? → Bắt đầu trong một căn phòng nhỏ ở Brixton, London." },
+      { q: "What percentage of Kresse Wesling's profits goes to the Fire Fighters Charity?",
+        options: ["10%", "25%", "50%"], answer: 2, answerSource: "file",
+        note: "Bài nêu rõ 50% lợi nhuận được dành cho quỹ từ thiện của lính cứu hỏa (vì nguyên liệu là vòi cứu hỏa cũ).",
+        vi: "Bao nhiêu phần trăm lợi nhuận của Kresse Wesling dành cho quỹ Fire Fighters Charity? → 50%." },
+      { q: "What type of products does Abigail Bryans create?",
+        options: ["Wooden signs with clever sayings", "Hand-painted cushions", "Recycled belts and wallets"], answer: 0, answerSource: "file",
+        note: "Abigail làm biển gỗ (wooden signs) có câu nói dí dỏm, ví dụ 'Champagne is the answer'. Gối là của Edwina, thắt lưng/ví là của Kresse.",
+        vi: "Abigail Bryans làm loại sản phẩm gì? → Biển gỗ với những câu nói dí dỏm." },
+      { q: "What was Abigail Bryans doing when she started her business?",
+        options: ["She was working for a company that sold gifts.", "She was working full-time in a workshop.", "She was raising three small children and had no job."], answer: 2, answerSource: "file",
+        note: "Khoảng mười năm trước, cô một mình nuôi ba con nhỏ và không có việc làm. Chú ý thì quá khứ tiếp diễn 'was doing' hỏi về hoàn cảnh lúc đó.",
+        vi: "Abigail Bryans đang làm gì khi bắt đầu kinh doanh? → Cô đang nuôi ba con nhỏ và không có việc làm." },
+      { q: "What was Abigail Bryans' main inspiration to start her business?",
+        options: ["A job offer to create wooden signs for a company.", "A desire to make personalized signs for her family.", "A friend's encouragement to not be afraid of failure."], answer: 2, answerSource: "file",
+        note: "Một người bạn nói với cô 'Don't be frightened to fail' (đừng sợ thất bại) – chính lời này truyền cảm hứng cho cô khởi nghiệp.",
+        vi: "Nguồn cảm hứng chính để Abigail Bryans khởi nghiệp là gì? → Lời động viên của một người bạn rằng đừng sợ thất bại." },
+      { q: "What happened to Edwina Cooper before she started her business?",
+        options: ["She worked as an illustrator for a local business.", "She lost her job and started selling cushions.", "She had a stroke and was told she would never paint again."], answer: 2, answerSource: "file",
+        note: "'Stroke' = đột quỵ. Edwina bị đột quỵ khoảng mười năm trước, bác sĩ nói cô sẽ không bao giờ vẽ lại được. Vẽ minh họa cho bạn chỉ là chuyện sau khi hồi phục.",
+        vi: "Điều gì đã xảy ra với Edwina Cooper trước khi cô bắt đầu kinh doanh? → Cô bị đột quỵ và được bảo rằng sẽ không bao giờ vẽ lại được." },
+      { q: "How did Edwina Cooper's stroke affect her?",
+        options: ["She became completely paralyzed and needed help to paint.", "She couldn't speak or move her right hand, which she used to paint.", "She lost her ability to speak but could still paint."], answer: 1, answerSource: "file",
+        note: "Cô không nói được và không cử động được tay phải – tay dùng để vẽ. Không phải liệt toàn thân, và cũng không thể vẽ được lúc đó.",
+        vi: "Cơn đột quỵ ảnh hưởng đến Edwina Cooper như thế nào? → Cô không thể nói hay cử động tay phải, tay mà cô dùng để vẽ." },
+      { q: "Where is Edwina Cooper's business located now?",
+        options: ["In a workshop in South London", "In a large office in London", "In her home on the Isle of Wight"], answer: 2, answerSource: "file",
+        note: "Cô cùng chồng và con trai chuyển đến đảo Wight khoảng bảy năm trước và vẽ gối tại nhà. Nam London là nơi Abigail làm việc.",
+        vi: "Hiện nay việc kinh doanh của Edwina Cooper đặt ở đâu? → Tại nhà cô trên đảo Wight." },
+      { q: "What is a unique feature of Edwina Cooper's paintings, according to her customers?",
+        options: ["They are created using old fire hoses.", "They have humorous sayings on them.", "They are inspired by the Isle of Wight."], answer: 2, answerSource: "file",
+        note: "Khách hàng nói tranh của cô khiến họ cảm thấy như đang ở trên đảo cùng cô – tranh lấy cảm hứng từ đảo Wight. Vòi cứu hỏa là Kresse, câu nói hài là Abigail.",
+        vi: "Theo khách hàng, nét độc đáo của tranh Edwina Cooper là gì? → Chúng lấy cảm hứng từ đảo Wight." }
+    ]
+  },
+  {
+    id: 16,
+    title: "Mini Test 5 – Trọng âm & Âm (Unit 5)",
+    source: "23-MINI_TEST_5-_UNIT_5_91-100.docx",
+    topic: "Trọng âm từ nhiều âm tiết; nhận diện nguyên âm giống nhau",
+    intro: "Moodle chặn xem lại Mini Test 5, nên cấp độ này dựng từ file đáp án .docx bạn gửi. Chỉ hai phần Trọng âm và Nối âm là tự dựng lại được (Claude đã kiểm tra lại từng đáp án, đều đúng). Bài gốc là điền/nối, Claude tạo phương án nhiễu để chơi được. Các phần còn lại (thì hoàn thành, từ vựng nông thôn, cụm động từ) chỉ có đáp án, thiếu câu gốc nên chưa đưa vào.",
+    questions: [
+      { q: "Which syllable is stressed in \"documentary\"?",
+        options: ["DO-cu-men-ta-ry", "do-cu-MEN-ta-ry", "do-cu-men-TA-ry"], answer: 1, answerSource: "file",
+        note: "Từ đuôi -ary (5 âm tiết) thường nhấn vào âm tiết thứ 3: do-cu-MEN-ta-ry /ˌdɒkjuˈmentri/.",
+        vi: "Trọng âm của 'documentary' (phim tài liệu) rơi vào âm tiết nào? → MEN (âm tiết thứ 3)." },
+      { q: "Which syllable is stressed in \"animation\"?",
+        options: ["A-ni-ma-tion", "a-NI-ma-tion", "a-ni-MA-tion"], answer: 2, answerSource: "file",
+        note: "Quy tắc: từ đuôi -tion luôn nhấn vào âm tiết ngay trước -tion: a-ni-MA-tion /ˌænɪˈmeɪʃn/.",
+        vi: "Trọng âm của 'animation' (phim hoạt hình) rơi vào âm tiết nào? → MA (ngay trước -tion)." },
+      { q: "Which syllable is stressed in \"harvested\"?",
+        options: ["HAR-ves-ted", "har-VES-ted", "har-ves-TED"], answer: 0, answerSource: "file",
+        note: "'harvest' nhấn âm đầu (HAR-vest); thêm đuôi -ed không làm đổi trọng âm: HAR-ves-ted /ˈhɑːvɪstɪd/.",
+        vi: "Trọng âm của 'harvested' (đã thu hoạch) rơi vào âm tiết nào? → HAR (âm đầu)." },
+      { q: "Which syllable is stressed in \"reality\"?",
+        options: ["RE-a-li-ty", "re-A-li-ty", "re-a-LI-ty"], answer: 1, answerSource: "file",
+        note: "Quy tắc: từ đuôi -ity nhấn vào âm tiết ngay trước -ity: re-A-li-ty /riˈæləti/ (khác với 'real' nhấn âm đầu).",
+        vi: "Trọng âm của 'reality' (thực tế) rơi vào âm tiết nào? → A (âm tiết thứ 2)." },
+      { q: "Which syllable is stressed in \"countryside\"?",
+        options: ["COUN-try-side", "coun-TRY-side", "coun-try-SIDE"], answer: 0, answerSource: "file",
+        note: "Từ ghép (country + side) thường nhấn vào phần đầu: COUN-try-side /ˈkʌntrisaɪd/.",
+        vi: "Trọng âm của 'countryside' (vùng nông thôn) rơi vào âm tiết nào? → COUN (âm đầu)." },
+      { q: "Which word has the same vowel sound as \"screen\"?",
+        options: ["switch", "wheat", "stone"], answer: 1, answerSource: "file",
+        note: "'screen' và 'wheat' đều có âm /iː/ (i dài). 'switch' là /ɪ/ ngắn, 'stone' là /əʊ/.",
+        vi: "Từ nào có nguyên âm giống 'screen' (màn hình)? → wheat (lúa mì) – cùng âm /iː/." },
+      { q: "Which word has the same vowel sound as \"pick\"?",
+        options: ["wheat", "wood", "switch"], answer: 2, answerSource: "file",
+        note: "'pick' và 'switch' đều có âm /ɪ/ (i ngắn). Đừng nhầm với 'wheat' /iː/ dài.",
+        vi: "Từ nào có nguyên âm giống 'pick' (hái, nhặt)? → switch (công tắc) – cùng âm /ɪ/." },
+      { q: "Which word has the same vowel sound as \"pond\"?",
+        options: ["volume", "stone", "drama"], answer: 0, answerSource: "file",
+        note: "'pond' và 'volume' đều có âm /ɒ/ (o ngắn). 'stone' là /əʊ/, 'drama' là /ɑː/.",
+        vi: "Từ nào có nguyên âm giống 'pond' (ao)? → volume (âm lượng) – cùng âm /ɒ/." },
+      { q: "Which word has the same vowel sound as \"grow\"?",
+        options: ["wood", "volume", "stone"], answer: 2, answerSource: "file",
+        note: "'grow' và 'stone' đều có nguyên âm đôi /əʊ/. 'volume' có /ɒ/ ngắn dù cũng viết bằng chữ o.",
+        vi: "Từ nào có nguyên âm giống 'grow' (mọc, trồng)? → stone (đá) – cùng âm /əʊ/." },
+      { q: "Which word has the same vowel sound as \"bush\"?",
+        options: ["wood", "drama", "switch"], answer: 0, answerSource: "file",
+        note: "'bush' và 'wood' đều có âm /ʊ/ (u ngắn). Chữ 'u' trong 'bush' không đọc /ʌ/ như 'bus'.",
+        vi: "Từ nào có nguyên âm giống 'bush' (bụi cây)? → wood (gỗ) – cùng âm /ʊ/." }
+    ]
+  }
+  /* Thêm cấp độ tiếp theo tại đây khi có file mới */
+];
+
+/* ===================== ỨNG DỤNG ===================== */
+const app = document.getElementById('app');
+const best = {}; // điểm cao nhất mỗi cấp độ (trong phiên)
+let state = null;
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const blank = s => esc(s).replace('___','<span class="blank"></span>');
+const srcBadge = q => q.answerSource === 'claude'
+  ? '<span class="badge claude">✦ Đáp án do Claude tìm</span>'
+  : '<span class="badge file">Đáp án từ file gốc</span>';
+
+function home(){
+  state = null;
+  app.innerHTML = `
+    <h1>Luyện trắc nghiệm</h1>
+    <p class="sub">Mỗi file bạn gửi là một cấp độ riêng. Chọn cấp độ để bắt đầu.</p>
+    ${LEVELS.map(l=>{
+      const n = l.questions.length;
+      const c = l.questions.filter(q=>q.answerSource==='claude').length;
+      return `<button class="level" onclick="start(${l.id})">
+        <div class="num">${l.id}</div>
+        <div>
+          <div class="t">${esc(l.title)}</div>
+          <div class="m">${esc(l.topic)} · ${n} câu${c?` · ${c} đáp án do Claude tìm`:''}</div>
+          <div class="m">Nguồn: ${esc(l.source)}</div>
+        </div>
+        <div class="best">${best[l.id]!=null?`Cao nhất ${best[l.id]}/${n}`:'Chưa làm'}</div>
+      </button>`;
+    }).join('')}
+    <div class="legend">
+      <span class="badge file">Đáp án từ file gốc</span>
+      <span class="badge claude">✦ Đáp án do Claude tìm</span>
+      <span>— hiển thị ở mỗi câu để bạn biết nguồn đáp án</span>
+    </div>`;
+}
+
+function start(id){
+  const level = LEVELS.find(l=>l.id===id);
+  state = { level, i:0, wrongs:[], solved:false, results:[] };
+  question();
+}
+
+function question(){
+  const {level,i,wrongs,solved} = state;
+  const q = level.questions[i];
+  app.innerHTML = `
+    <div class="bar">
+      <button class="ghost" onclick="home()" style="padding:6px 12px">← Cấp độ</button>
+      <span>Cấp ${level.id} · Câu ${i+1}/${level.questions.length}</span>
+    </div>
+    <div class="track"><div style="width:${(i/level.questions.length)*100}%"></div></div>
+    ${level.intro?`<div class="intro">${esc(level.intro)}</div>`:''}
+    <p class="q">${blank(q.q)}</p>
+    <div class="opts">
+      ${q.options.map((o,k)=>{
+        let cls='opt', dis=false;
+        if(solved){ dis=true; if(k===q.answer) cls+=' correct'; else if(wrongs.includes(k)) cls+=' wrong'; }
+        else if(wrongs.includes(k)){ cls+=' wrong'; dis=true; }
+        return `<button class="${cls}" ${dis?'disabled':''} onclick="pick(${k})">
+          <span class="k">${'abc'[k]}</span><span>${esc(o)}</span></button>`;
+      }).join('')}
+    </div>
+    ${solved?`
+      <div class="fb ok">
+        <div class="v">${wrongs.length?'Đúng rồi (sau '+wrongs.length+' lần sai).':'Chính xác ngay lần đầu.'}</div>
+        <div class="note"><strong>Vì sao chọn "${esc(q.options[q.answer])}":</strong> ${esc(q.note||'')}</div>
+        ${q.vi?`<div class="vi">${esc(q.vi)}</div>`:''}
+        <div class="src">${srcBadge(q)}${q.answerSource==='claude'?' — file gốc ghi sai hoặc thiếu, đáp án này không lấy từ nguồn bạn gửi.':''}</div>
+      </div>
+      <div class="actions">
+        <span></span>
+        <button onclick="next()">${i+1<level.questions.length?'Câu tiếp theo':'Xem kết quả'}</button>
+      </div>`
+    : wrongs.length?`
+      <div class="fb bad">
+        <div class="v">Chưa đúng. Hãy chọn lại.</div>
+        <div class="note">Còn ${q.options.length-wrongs.length} lựa chọn. Chỉ sang câu tiếp khi chọn đúng.</div>
+      </div>`:''}
+  `;
+}
+
+function pick(k){
+  if(state.solved) return;
+  if(k===state.level.questions[state.i].answer){
+    state.solved = true;
+    state.results.push(state.wrongs.length); // số lần sai trước khi đúng
+  } else if(!state.wrongs.includes(k)){
+    state.wrongs.push(k);
+  }
+  question();
+}
+
+function next(){
+  state.i++; state.wrongs=[]; state.solved=false;
+  if(state.i<state.level.questions.length) question(); else finish();
+}
+
+function finish(){
+  const {level,results} = state;
+  const score = results.filter(w=>w===0).length, n = level.questions.length;
+  best[level.id] = Math.max(best[level.id]||0, score);
+  app.innerHTML = `
+    <div class="bar"><button class="ghost" onclick="home()" style="padding:6px 12px">← Cấp độ</button><span>Cấp ${level.id} · Kết quả</span></div>
+    <div class="score"><div><span class="big">${score}</span><span class="of" style="font-size:28px"> / ${n}</span></div>
+      <div class="of">Số câu đúng ngay lần đầu. ${score===n?'Trọn vẹn, sẵn sàng cho cấp độ tiếp theo.':score>=n*0.7?'Khá tốt, xem lại các câu phải chọn lại bên dưới.':'Ôn lại phần này rồi thử lại nhé.'}</div></div>
+    <div class="actions" style="justify-content:center">
+      <button class="ghost" onclick="home()">Chọn cấp độ khác</button>
+      <button onclick="start(${level.id})">Làm lại cấp ${level.id}</button>
+    </div>
+    <div class="review">
+      ${level.questions.map((q,k)=>`
+        <div class="row ${results[k]===0?'hit':'miss'}">
+          <div>${k+1}. ${esc(q.q.replace('___','['+q.options[q.answer]+']'))}</div>
+          <div class="s">${results[k]===0?'Đúng ngay lần đầu':'Đúng sau '+results[k]+' lần sai'} · ${srcBadge(q)}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function toggleTheme(){
+  const h=document.documentElement, dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme', dark?'light':'dark');
+  document.getElementById('themeBtn').textContent = dark?'☾ Nền đen':'☀ Nền sáng';
+}
+home();
+</script>
+</body>
+</html>
